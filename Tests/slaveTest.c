@@ -22,7 +22,7 @@
 //#define HASH ""
 
 //functions from slave.c
-char * getPath(int fd);
+unsigned char * getPath(int fd);
 int initSlaveSuite();
 //functions for this test.c
 void testReadAFilePath();
@@ -135,26 +135,25 @@ char * WhenAFilePathIsReadFromFileDescriptor(int fd){
    return path;
 }
 
-char * getPath(int fd) {
-   signed char separator = 0;
-   signed char * stringToReturn = NULL;
-   int index = 0;
-   int finished = FALSE;
+unsigned char * getPath(int fd) {
+	unsigned char separator = 0;
+	unsigned char * stringToReturn = NULL;
+	int index = 0;
+	int finished = FALSE;
+	int readReturn;
 
-   do{
-      if((index % BLOCK) == 0) {
-         stringToReturn = realloc(stringToReturn, (index + BLOCK) * sizeof(char));
-      }
-      read(fd,(void *)(stringToReturn + (index * sizeof(char))), sizeof(char));
-      if((stringToReturn[index] == EOF) || (stringToReturn[index] == separator)) {
-         stringToReturn[index] = 0;
-         finished = TRUE;
-      }
-      index++;
-   } while(!finished);
-   stringToReturn[index-2] = 0;
- 
-   return stringToReturn;
+	do{
+		if((index % BLOCK) == 0) {
+			stringToReturn = realloc(stringToReturn, (index + BLOCK) * sizeof(char));
+		}
+		readReturn = read(fd,(void *)(stringToReturn + (index * sizeof(char))),1);
+		if((readReturn <= 0) || (stringToReturn[index] == EOF) || (stringToReturn[index] == separator)) {
+			stringToReturn[index] = 0;
+			finished = TRUE;
+		}
+		index++;
+	} while(!finished);
+	return stringToReturn;
 }
 
 void thenFilesMustBeTheSame(char * path) {
