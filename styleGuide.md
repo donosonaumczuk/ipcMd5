@@ -3,9 +3,27 @@
 * Defined constant names: uppercase and underscore between words
 * Ifndef headers files: NAME_FILE_H
 * Space between variables and operators, but no space after/before parentheses.
-    Example: (var1 + var2)
+
+    Example:
+    ``` c
+    int x = (var1 + var2);
+
+    int z = ((2 * x) + y);
+    ```
+
+* Space after comma
+
+    Example:
+        ``` c
+        x = functionCall(param1, param2, param3);
+
+        int function(char c, int n) {
+            printf("Note space next to char c");
+        }
+        ```
 
 * Braces on top and space between parentheses - brace
+
     Example:
         ``` c
         if(x == "styleGuide") {
@@ -14,6 +32,7 @@
         ```
 
 * Pointer types variables: asterisk next to variable name
+
     Example:
         ``` c
         int *variable = value;
@@ -32,6 +51,7 @@
         ```
 
 * One-line sentences on if/loop: with Braces
+
     Example:
     ``` c
     if(x == NULL) {
