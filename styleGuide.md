@@ -7,18 +7,49 @@
 
 * Braces on top and space between parentheses - brace
     Example:
+        ``` c
         if(x == "styleGuide") {
             printf("Remember the space!");
         }
+        ```
 
 * Pointer types variables: asterisk next to variable name
     Example:
+        ``` c
         int *variable = value;
+
         int *functionName(int *var1) {
             var1 = (int *) 0;
             printf("Hello World!");
         }
+        ```
 
     Except VOID:
+        ``` c
         void * variable;
+
         void * functionName(void * var1);
+        ```
+
+* One-line sentences on if/loop: with Braces
+    Example:
+    ``` c
+    if(x == NULL) {
+        exit(1);
+    }
+    else {
+        printf("Cool example!\n");
+    }
+
+    while(i < 10) {
+        printf("10 Magic number? %d\n", i);
+    }
+    ```
+
+* Loop without code: semicolon next to parentheses
+    Example:
+    ``` c
+    while(x == NULL);
+
+    for(int i = 0; i < 10; i++);
+    ```
