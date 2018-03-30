@@ -31,8 +31,12 @@ int main()
 
    /* add the tests to the suite */
    // /* NOTE - ORDER IS IMPORTANT - MUST TEST fread() AFTER fprintf() */
-   if((CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL) ||
-    (CU_add_test(slaveSuite, "test of write the hash of a file on a file()", testWriteAHashOnAFile) == NULL)) {
+   // if((CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL) ||
+   //  (CU_add_test(slaveSuite, "test of write the hash of a file on a file()", testWriteAHashOnAFile) == NULL)) {
+   //    CU_cleanup_registry();
+   //    return CU_get_error();
+   //  }
+   if(CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL){
       CU_cleanup_registry();
       return CU_get_error();
     }
@@ -64,6 +68,42 @@ int cleanSlaveSuite()
        return 0;
 }
 
+void testWriteHashOnAFIFO() {
+  char *filePath, *fifoName;
+
+  fifoName = givenAFifo();
+  filePath = givenThePathOfAFileToHash();
+
+  whenASlaveWritesAHashOnAFifo(fifoName, filePath);
+
+  thenHashIsWrittenOnAFifo(fifoName);
+}
+
+char *givenAFifo() {
+  if(mkfifo("fifoTest", S_IRUSR | S_IWUSR) == -1) {
+    fprintf(stderr, "Error making a fifo.\n");
+    exit(1);
+  }
+  return "fifoTest";
+}
+
+char *givenThePathOfAFileToHash() {
+    return FILE_PATH_TO_HASH;
+}
+
+void whenASlaveWritesAHashOnAFifo(char *fifoName, char *filePathToHash) {
+  int fifoFd = open(fifoName, O_RDWR);  
+  writeHashOnFd(fifoFd, filePathToHash);
+}
+
+void thenHashIsWrittenOnAFifo(char *fifoName) {
+  char hash[HASH_MD5_LENGTH + 1];
+  int fifoFd = open(fifoName, O_RDWR);
+  read(fifoFd,hash,HASH_MD5_LENGTH);
+  hash[HASH_MD5_LENGTH] = 0;
+  CU_ASSERT(strcmp(hash,HASH) == 0);
+
+}
 
 void testWriteAHashOnAFile(){
    int emptyFileFd;
@@ -103,7 +143,7 @@ void testReadAFilePath() {
    char * path;
    fd = givenAFileDescriptorWithSomethingWritten();
    //givenASlaveProcess();
-   path = WhenAFilePathIsReadFromFileDescriptor(fd);
+   path = whenAFilePathIsReadFromFileDescriptor(fd);
 
 
    
@@ -118,7 +158,7 @@ int givenAFileDescriptorWithSomethingWritten() {
 }
 
 
-char *WhenAFilePathIsReadFromFileDescriptor(int fd){
+char *whenAFilePathIsReadFromFileDescriptor(int fd){
    char * path = getPath(fd);
    close(fd);
    return path;
