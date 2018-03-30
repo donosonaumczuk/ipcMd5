@@ -2,10 +2,10 @@
 
 int main(int argc, char const *argv[]) {
     if(argc == 1) {
-        //ERROR, NO ARGUMENTS
+        errorToStderr(INVALID_NUMBER_ARGS_ERROR);
     }
     else {
-        int * slavePids = malloc(/* ? */);
+        int *slavePids = allocSlavePidsMemory(/* slaveQty */);
 
         if(makeSlaves(/* slaveQty */, slavePids) == ERROR_STATE) {
             //ERROR, SLAVE CREATION FAILED
@@ -20,7 +20,9 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
-
+int *allocSlavePidsMemory(int slaveQuantity) {
+    int *allocatedMemory = (int *) malloc(slaveQuantity * size);
+}
 
 int makeAvailableSlavesQueue() {
     if(mkfifo(AVAILABLE_SLAVES_QUEUE, ) == ERROR_STATE) {
@@ -30,7 +32,7 @@ int makeAvailableSlavesQueue() {
     return open(AVAILABLE_SLAVES_QUEUE, O_RDONLY);
 }
 
-int makePathToHashQueues(int slaveQuantity, int * slavePids, int * pathToHashQueues) {
+int makePathToHashQueues(int slaveQuantity, int *slavePids, int *pathToHashQueues) {
     char fifoName[MAX_LONG_DIGITS] = {0};
     for(int i = 0; i < slaveQuantity; i++) {
         sprintf(fifoName, "%d", slavePids[i]);
@@ -46,7 +48,7 @@ int makeMd5ResultQueue() {
     return open(MD5_RESULT_QUEUE, O_RDONLY); //check for error
 }
 
-int makeSlaves(int slaveQuantity, int * slavePids) {
+int makeSlaves(int slaveQuantity, int *slavePids) {
     int isChild = FALSE;
     int errorState = OK_STATE;
 
