@@ -6,5 +6,6 @@ int error(char * errorMessage) {
 }
 
 int errorToStderr(char * errorMessage) {
-    sprintf()
+    sprintf(errorMessage, "%s\n", STDERR);
+    exit(1);
 }

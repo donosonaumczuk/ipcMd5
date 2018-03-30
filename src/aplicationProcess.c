@@ -1,4 +1,4 @@
-#include "ipcMd5.h"
+#include "aplicationProcess.h"
 
 int main(int argc, char const *argv[]) {
     if(argc == 1) {
@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
 
 
 int makeAvailableSlavesQueue() {
-    if(mkfifo(AVAILABLE_SLAVES_QUEUE, /* PERMISOS */) == ERROR_STATE) {
+    if(mkfifo(AVAILABLE_SLAVES_QUEUE, ) == ERROR_STATE) {
         return ERROR_STATE;
     }
 
