@@ -20,6 +20,8 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
+
+
 int makeAvailableSlavesQueue() {
     if(mkfifo(AVAILABLE_SLAVES_QUEUE, /* PERMISOS */) == ERROR_STATE) {
         return ERROR_STATE;
