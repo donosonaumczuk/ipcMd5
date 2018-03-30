@@ -3,6 +3,7 @@
 #define APLICATION_PROCESS_H
 
 #include "ipcMd5.h"
+#include <sys/types.h>
 
 #define TRUE 1
 #define FALSE 0

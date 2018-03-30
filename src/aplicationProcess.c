@@ -5,50 +5,53 @@ int main(int argc, char const *argv[]) {
         errorToStderr(INVALID_NUMBER_ARGS_ERROR);
     }
     else {
-        int *slavePids = allocSlavePidsMemory(/* slaveQty */);
-
-        if(makeSlaves(/* slaveQty */, slavePids) == ERROR_STATE) {
-            //ERROR, SLAVE CREATION FAILED
-        }
-
-        int fdSlavesQueue = makeAvailableSlavesQueue();
-        if(fdSlavesQueue == ERROR_STATE) {
-            //ERROR, FIFO CREATION FAILED
-        }
+        slaveQuantity = /* some criteria */;
+        pid_t slavePids[slaveQuantity] = {0};
+        makeSlaves(slavePids, slaveQuantity);
+        int fdAvailableSlavesQueue = makeAvailableSlavesQueue();
+        int fileToHashFds[slaveQuantity] = {0};
+        makeFileToHashQueues(fileToHashFds, slavePids, slaveQuantity);
     }
 
+    freeResources(); //may be not needed... but... to don't forget
     return 0;
 }
 
-int *allocSlavePidsMemory(int slaveQuantity) {
-    int *allocatedMemory = (int *) malloc(slaveQuantity * size);
-}
-
 int makeAvailableSlavesQueue() {
-    if(mkfifo(AVAILABLE_SLAVES_QUEUE, ) == ERROR_STATE) {
+    if(mkfifo(AVAILABLE_SLAVES_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
         return ERROR_STATE;
     }
 
     return open(AVAILABLE_SLAVES_QUEUE, O_RDONLY);
 }
 
-int makePathToHashQueues(int slaveQuantity, int *slavePids, int *pathToHashQueues) {
-    char fifoName[MAX_LONG_DIGITS] = {0};
+void makeFileToHashQueues(int *fileToHashQueues, int slaveQuantity, pid_t *slavePids) {
+    char pidString[MAX_LONG_DIGITS] = {0};
     for(int i = 0; i < slaveQuantity; i++) {
-        sprintf(fifoName, "%d", slavePids[i]);
-        mkfifo(fifoName, /* PERMISOS */); //check for error
-        pathToHashQueues[i] = open(fifoName, O_RDONLY);
+        sprintf(pidString, "%d", slavePids[i]);
+        if(mkfifo(pidString, S_IRUSR | S_IWUSR) == ERROR_STATE) {
+            error(MKFIFO_ERROR);
+        }
+        if((fileToHashQueues[i] = open(fifoName, O_RDONLY)) == ERROR_STATE) {
+            error(OPEN_FIFO_ERROR);
+        }
     }
-
-    // return errorState;
 }
 
 int makeMd5ResultQueue() {
-    mkfifo(MD5_RESULT_QUEUE, /* PERMISOS */); //check for error
-    return open(MD5_RESULT_QUEUE, O_RDONLY); //check for error
+    if(mkfifo(MD5_RESULT_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
+        error(MKFIFO_ERROR);
+    }
+
+    int fdOpen;
+    if((fdOpen = open(MD5_RESULT_QUEUE, O_RDONLY) {
+        error(OPEN_FIFO_ERROR);
+    }
+
+    return fdOpen;
 }
 
-int makeSlaves(int slaveQuantity, int *slavePids) {
+void makeSlaves(int *slavePids, int slaveQuantity) {
     int isChild = FALSE;
     int errorState = OK_STATE;
 
@@ -59,15 +62,18 @@ int makeSlaves(int slaveQuantity, int *slavePids) {
             errorState = ERROR_STATE;
         }
 
-        else if(slavePids[i] == 0) {
+        if(slavePids[i] == 0) {
             isChild = TRUE;
         }
     }
 
-    if(isChild) {
-        close();
-        errorState = execl("./slave", NULL); //CHECK PATH
+    if(errorState != OK_STATE) {
+        error(FORK_SLAVE_ERROR);
     }
 
-    return errorState;
+    if(isChild) {
+        if(execl(SLAVE_BIN_PATH, NULL) == ERROR_STATE) {
+            error(EXEC_SLAVE_ERROR);
+        }
+    }
 }
