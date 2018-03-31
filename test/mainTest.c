@@ -22,7 +22,8 @@ int main()
    if((CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL)
     || (CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL)
     || (CU_add_test(ShmBuffSuite, "test to write in share memory", testWriteInShmBuff) == NULL)
-    || (CU_add_test(ShmBuffSuite, "test to read from share memory", testReadFromShmBuff) == NULL)) {
+    || (CU_add_test(ShmBuffSuite, "test to read from share memory", testReadFromShmBuff) == NULL)
+    || (CU_add_test(ShmBuffSuite, "test to write in share memory after read", testWriteInShmBuffAfterRead) == NULL)) {
       CU_cleanup_registry();
       return CU_get_error();
     }

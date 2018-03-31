@@ -66,3 +66,25 @@ void whenReadFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer) {
 void thenDataIsInBuffer(char *buffer) {
     CU_ASSERT(strcmp(buffer, STRING_TO_WRITE)==0);
 }
+
+void testWriteInShmBuffAfterRead() {
+    ShmBuffCDT shmBuffPointer;
+    char buffer[SHM_BUFF_SIZE];
+
+    shmBuffPointer = givenAShmBuffWithDataAfterRead();
+
+    thenIsWrittenInShmBuff(shmBuffPointer);
+
+    thenIsWrittenInShmBuffAfterRead(shmBuffPointer);
+}
+
+ShmBuffCDT givenAShmBuffWithDataAfterRead() {
+    ShmBuffCDT shmBuffPointer = givenAShmBuffWithData();
+    char buffer[SIZE_TO_READ];
+    readFromShmBuff(shmBuffPointer, buffer, SIZE_TO_READ);
+    return shmBuffPointer;
+}
+
+void thenIsWrittenInShmBuffAfterRead(ShmBuffCDT shmBuffPointer) {
+    CU_ASSERT(strcmp(shmBuffPointer->buffer, STRING_AFTER_READ));
+}

@@ -9,6 +9,8 @@
 #define SHM_BUFF_NAME "/shmbuffnametest1"
 #define STRING_TO_WRITE "I am written"
 #define SHM_BUFF_SIZE 15
+#define SIZE_TO_READ 11
+#define STRING_AFTER_READ "am written"
 
 
 int initShmBuffSuite(void);
@@ -21,5 +23,8 @@ void testReadFromShmBuff(void);
 ShmBuffCDT givenAShmBuffWithData(void);
 void whenReadFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer);
 void thenDataIsInBuffer(char *buffer);
+void testWriteInShmBuffAfterRead(void);
+ShmBuffCDT givenAShmBuffWithDataAfterRead(void);
+void thenIsWrittenInShmBuffAfterRead(ShmBuffCDT shmBuffPointer);
 
 #endif
