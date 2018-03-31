@@ -68,7 +68,7 @@ void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
     int distance = shmBuffPointer->last - shmBuffPointer->first;
     distance = (isLastGreaterThanFirst) ? distance : distance + shmBuffPointer->size;
 
-    if(distance >= size) {
+    if(distance > size) {
         shmBuffPointer->readerPid = getpid();
         kill(shmBuffPointer->readerPid, SIGSTOP);
     }
@@ -105,13 +105,12 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
     sleepReader(shmBuffPointer, size);
 
     sem_wait(&shmBuffPointer->sem);
-
     for (int i = 0; i < size; i++) {
-        if(shmBuffPointer->last == 0) {
+        if(shmBuffPointer->last == START) {
             shmBuffPointer->last = shmBuffPointer->size;
         }
         shmBuffPointer->last--;
-        buffer[i] = shmBuffPointer->buffer[shmBuffPointer->last];
+        buffer[size-i-1] = shmBuffPointer->buffer[shmBuffPointer->last];
     }
 
     sem_post(&shmBuffPointer->sem);
