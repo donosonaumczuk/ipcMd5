@@ -11,38 +11,6 @@
 #include "include/slaveTest.h"
 #include "./../src/include/slave.h"
 
-
-//#define HASH ""
-
-int main()
-{
-   CU_pSuite slaveSuite = NULL;
-
-   /* initialize the CUnit test registry */
-   if (CUE_SUCCESS != CU_initialize_registry())
-      return CU_get_error();
-
-   /* add a suite to the registry */
-   slaveSuite = CU_add_suite("slaveSuite", initSlaveSuite, cleanSlaveSuite);
-   if (NULL == slaveSuite) {
-      CU_cleanup_registry();
-      return CU_get_error();
-   }
-
-   /* add the tests to the suite */
-   // /* NOTE - ORDER IS IMPORTANT - MUST TEST fread() AFTER fprintf() */
-   if((CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL)
-    || (CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL)) {
-      CU_cleanup_registry();
-      return CU_get_error();
-    }
-   /* Run all tests using the CUnit Basic interface */
-   CU_basic_set_mode(CU_BRM_VERBOSE);
-   CU_basic_run_tests();
-   CU_cleanup_registry();
-   return CU_get_error();
-}
-
 /* The suite initialization function.
  * Opens the temporary file used by the tests.
  * Returns zero on success, non-zero otherwise.
@@ -88,7 +56,7 @@ char *givenThePathOfAFileToHash() {
 }
 
 void whenASlaveWritesAHashOnAFifo(char *fifoName, char *filePathToHash) {
-  int fifoFd = open(fifoName, O_RDWR);  
+  int fifoFd = open(fifoName, O_RDWR);
   writeHashOnFd(fifoFd, filePathToHash);
 }
 
@@ -108,7 +76,7 @@ void testReadAFilePath() {
    fd = givenAFileDescriptorWithSomethingWritten();
 
    path = whenAFilePathIsReadFromFileDescriptor(fd);
-   
+
    thenFilesMustBeTheSame(path);
 }
 
@@ -127,9 +95,7 @@ char *whenAFilePathIsReadFromFileDescriptor(int fd){
 }
 
 void thenFilesMustBeTheSame(char *path) {
-   
-  CU_ASSERT(strcmp(path, "./test/PathName/ToRead.txt") == 0);  
+
+  CU_ASSERT(strcmp(path, "./test/PathName/ToRead.txt") == 0);
 
 }
-
-
