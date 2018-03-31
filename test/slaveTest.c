@@ -36,7 +36,8 @@ int main()
    //    CU_cleanup_registry();
    //    return CU_get_error();
    //  }
-   if(CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL){
+   if((CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL)
+    || (CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL)) {
       CU_cleanup_registry();
       return CU_get_error();
     }
@@ -143,10 +144,8 @@ void testReadAFilePath() {
    int fd;
    char * path;
    fd = givenAFileDescriptorWithSomethingWritten();
-   //givenASlaveProcess();
+
    path = whenAFilePathIsReadFromFileDescriptor(fd);
-
-
    
    thenFilesMustBeTheSame(path);
 }
@@ -167,7 +166,7 @@ char *whenAFilePathIsReadFromFileDescriptor(int fd){
 
 void thenFilesMustBeTheSame(char * path) {
    
-  CU_ASSERT(0 == strcmp(path, "./test/PathName/ToRead.txt"));  
+  CU_ASSERT(strcmp(path, "./test/PathName/ToRead.txt") == 0);  
 
 }
 
