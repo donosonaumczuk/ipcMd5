@@ -6,7 +6,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include "include/slave.h"
+#include "include/errors.h"
+
+static void obtainHash(int fd, char *hash);
+static void writeHashWithExpectedFormat(int fd, char *hash, char *filepath);
+
 
 char *getPath(int fd) {
    char separator = ',';
@@ -30,16 +36,37 @@ char *getPath(int fd) {
 }
 
 void writeHashOnFd(int fd, char *filePath) {
-   int status;
+   int status, fileDescriptors[2];
    pid_t pid;
+   char hash[HASH_MD5_LENGTH + 1];
+   if(pipe(fileDescriptors) == ERROR_STATE)
+      error("Pipe failed.\n");
    pid = fork();
    if(pid == 0) {
       close(1);
-      dup(fd);
-      if(execl("/usr/bin/md5sum","md5sum", filePath,NULL) == -1) {
-            perror("execl Failed.\n");
-            exit(1);
-     }
+      dup(fileDescriptors[1]);
+      close(fileDescriptors[0]);
+      if(execl("/usr/bin/md5sum","md5sum", filePath,NULL) == ERROR_STATE)
+         error("Couldn't execute md5sum.\n");
    }
+   else if(pid == ERROR_STATE)
+      error("Fork failed.\n");
+   close(fileDescriptors[1]);
    waitpid(pid, &status, 0);
+   obtainHash(fileDescriptors[0],hash);
+   writeHashWithExpectedFormat(fd,hash,filePath);
+   close(fileDescriptors[0]);
+   
+}
+
+static void obtainHash(int fd, char *hash) {
+   read(fd, hash, HASH_MD5_LENGTH);
+   hash[HASH_MD5_LENGTH] = 0;
+}
+
+static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
+   write(fd, filePath, strlen(filePath));
+   write(fd, ": ", 2);
+   write(fd, hash, HASH_MD5_LENGTH + 1);
+
 }

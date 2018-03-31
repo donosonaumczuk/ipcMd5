@@ -1,6 +1,5 @@
 #include <string.h>
 #include <unistd.h>
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -9,18 +8,24 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "slaveProcess.h"
+#include "include/ipcMd5"
 
 int main() {
-   // int fdmd5 = open(MD5_RESULT_QUEUE, O_CREAT|O_RDWR,S_IRUSR|S_IWUSR);
-   // int fdpaths = open(AVAILABLE_SLAVES_QUEUE, O_CREAT|O_RDWR,S_IRUSR|S_IWUSR);
+   char fifoPaths[MAX_LONG_DIGITS];
+   sprinf(fifoPaths,"%d",getpid());
+   int fdpaths = open(fifoPaths, O_RDONLY);
+   int fdrequest = open(AVAILABLE_SLAVES_QUEUE, O_WRONLY);
+   int fdmd5 = open(MD5_RESULT_QUEUE, O_WRONLY);
    
-   // char * filePathToHash = getPath(fdpaths);
+   char * filePathToHash = getPath(fdpaths);
 
-   // writeHashOnFd(fdmd5,filePathToHash);
+   writeHashOnFd(fdmd5,filePathToHash);
    
 
    // //ask for a new task
-   // close(fd);
+   close(fdpaths);
+   close(fdrequest);
+   close(fdmd5);
    return 0;
 }
 

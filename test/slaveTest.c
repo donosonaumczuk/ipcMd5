@@ -97,10 +97,11 @@ void whenASlaveWritesAHashOnAFifo(char *fifoName, char *filePathToHash) {
 }
 
 void thenHashIsWrittenOnAFifo(char *fifoName) {
-  char hash[HASH_MD5_LENGTH + 1];
+  int length = HASH_MD5_LENGTH + 2 + FILE_PATH_TO_HASH_LENGTH;
+  char hash[length + 1];
   int fifoFd = open(fifoName, O_RDWR);
-  read(fifoFd,hash,HASH_MD5_LENGTH);
-  hash[HASH_MD5_LENGTH] = 0;
+  read(fifoFd,hash,length);
+  hash[length] = 0;
   CU_ASSERT(strcmp(hash,HASH) == 0);
 
 }
@@ -152,7 +153,7 @@ void testReadAFilePath() {
 
 int givenAFileDescriptorWithSomethingWritten() {
    int fd = open("testReadAFilePath.txt", O_CREAT|O_RDWR,777);
-   write(fd,FILE_PATH_TO_READ,FILE_PATH_LENGTH);
+   write(fd,FILE_PATH_TO_READ,FILE_PATH_TO_READ_LENGTH);
    lseek(fd,0,SEEK_SET);
    return fd;
 }
