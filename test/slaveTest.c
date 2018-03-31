@@ -31,11 +31,6 @@ int main()
 
    /* add the tests to the suite */
    // /* NOTE - ORDER IS IMPORTANT - MUST TEST fread() AFTER fprintf() */
-   // if((CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL) ||
-   //  (CU_add_test(slaveSuite, "test of write the hash of a file on a file()", testWriteAHashOnAFile) == NULL)) {
-   //    CU_cleanup_registry();
-   //    return CU_get_error();
-   //  }
    if((CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL)
     || (CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL)) {
       CU_cleanup_registry();
@@ -101,48 +96,15 @@ void thenHashIsWrittenOnAFifo(char *fifoName) {
   int length = HASH_MD5_LENGTH + 2 + FILE_PATH_TO_HASH_LENGTH;
   char hash[length + 1];
   int fifoFd = open(fifoName, O_RDWR);
-  read(fifoFd,hash,length);
+  read(fifoFd,hash, length);
   hash[length] = 0;
-  CU_ASSERT(strcmp(hash,HASH) == 0);
+  CU_ASSERT(strcmp(hash, HASH) == 0);
 
 }
-
-void testWriteAHashOnAFile(){
-   int emptyFileFd;
-   givenAFileDescriptorThatIsEmpty(&emptyFileFd);
-   givenAPathOfAFile();
-
-   whenHashIsWrittenOnAFile(emptyFileFd,FILE_PATH_TO_HASH);
-
-   thenFileIsWrittenCorrectly(emptyFileFd);
-}
-
-void givenAFileDescriptorThatIsEmpty(int *fd) {
-   *fd = open("testWriteAHashOnAFile.txt", O_CREAT | O_RDWR);
-   if(*fd == -1) {
-      fprintf(stderr, "Error opening file.\n");
-   }
-}
-
-void givenAPathOfAFile() {
-   int fd = open(FILE_PATH_TO_HASH,O_CREAT|O_RDWR);
-   write(fd,"Text on the file to be hashed.",strlen("Text on the file to be hashed.")+1);
-   close(fd);
-}
-
-void whenHashIsWrittenOnAFile(int fd, char *filePath) {
-   writeHashOnFd(fd,filePath);
-}
-
-void thenFileIsWrittenCorrectly(int emptyFileFd) {
-     CU_ASSERT(10 == 10);
-
-}
-
 
 void testReadAFilePath() {
    int fd;
-   char * path;
+   char *path;
    fd = givenAFileDescriptorWithSomethingWritten();
 
    path = whenAFilePathIsReadFromFileDescriptor(fd);
@@ -151,20 +113,20 @@ void testReadAFilePath() {
 }
 
 int givenAFileDescriptorWithSomethingWritten() {
-   int fd = open("testReadAFilePath.txt", O_CREAT|O_RDWR,777);
-   write(fd,FILE_PATH_TO_READ,FILE_PATH_TO_READ_LENGTH);
-   lseek(fd,0,SEEK_SET);
+   int fd = open("testReadAFilePath.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+   write(fd, FILE_PATH_TO_READ, FILE_PATH_TO_READ_LENGTH);
+   lseek(fd, 0, SEEK_SET);
    return fd;
 }
 
 
 char *whenAFilePathIsReadFromFileDescriptor(int fd){
-   char * path = getPath(fd);
+   char *path = getPath(fd);
    close(fd);
    return path;
 }
 
-void thenFilesMustBeTheSame(char * path) {
+void thenFilesMustBeTheSame(char *path) {
    
   CU_ASSERT(strcmp(path, "./test/PathName/ToRead.txt") == 0);  
 
