@@ -1,10 +1,10 @@
-all: compile run
+all: compile run clean
 
 clean:
-	rm fifoTest testReadAFilePath.txt 
+	rm fifoTest testReadAFilePath.txt
 
 compile:
-	gcc -Wall -pedantic -std=c99 slaveTest.c ./../src/slave.c -lcunit -o test
+	gcc -Wall -pedantic -std=c99 mainTest.c slaveTest.c shmBuffTest.c ./../src/slave.c ./../src/shmBuff.c -pthread -lrt -lcunit -o test
 
 run: clean
 	./test
