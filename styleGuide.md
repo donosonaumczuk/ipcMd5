@@ -1,4 +1,5 @@
 * Tab size: 4
+* Max characters per line: 80 - Cut the line after an operator or comma
 * Variable and function names: camelCase
 * Defined constant names: uppercase and underscore between words
 * Ifndef headers files: NAME_FILE_H
@@ -31,7 +32,7 @@
         }
         ```
 
-* Pointer types variables: asterisk next to variable name
+* Pointer types variables: asterisk next to variable name (except `void *` type)
 
     * Example:
         ```c
@@ -43,7 +44,7 @@
         }
         ```
 
-    * Except VOID:
+    * Except `void *` type:
         ```c
         void * variable;
 
@@ -64,6 +65,15 @@
     while(i < 10) {
         printf("10 Magic number? %d\n", i);
     }
+    ```
+
+* Do-While loop: while next to bottom brace (with space)
+
+    * Example:
+    ```c
+    do {
+        something(x++);
+    } while(x < y);
     ```
 
 * Loop without code: semicolon next to parentheses
