@@ -15,6 +15,8 @@
 #define IS_SHARE 1
 #define SEM_INIT_VALUE 1
 #define OFF_SET 0
+#define FALSE 0
+#define TRUE 1
 
 typedef struct ShmBuff *ShmBuffCDT;
 

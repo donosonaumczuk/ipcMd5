@@ -23,7 +23,9 @@ int main()
     || (CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL)
     || (CU_add_test(ShmBuffSuite, "test to write in share memory", testWriteInShmBuff) == NULL)
     || (CU_add_test(ShmBuffSuite, "test to read from share memory", testReadFromShmBuff) == NULL)
-    || (CU_add_test(ShmBuffSuite, "test to write in share memory after read", testWriteInShmBuffAfterRead) == NULL)) {
+    || (CU_add_test(ShmBuffSuite, "test to write in share memory after read", testWriteInShmBuffAfterRead) == NULL)
+    || (CU_add_test(ShmBuffSuite, "test to read in share memory after read and write", testReadInShmBuffAfterReadAndWrite) == NULL)
+    || (CU_add_test(ShmBuffSuite, "test to write and read in share memory whit two process", testReadAndWriteDifferentProcess) == NULL)) {
       CU_cleanup_registry();
       return CU_get_error();
     }

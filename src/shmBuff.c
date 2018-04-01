@@ -7,6 +7,7 @@ struct ShmBuff {
     long int writerPid;
     long int readerPid;
     sem_t sem;
+    int isLastOperationWrite;
     char *buffer;
 };
 
@@ -27,6 +28,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
     shmBuffPointer->readerPid = PID_DEFAULT;
     shmBuffPointer->writerPid = PID_DEFAULT;
     sem_init(&shmBuffPointer->sem, IS_SHARE, SEM_INIT_VALUE);
+    shmBuffPointer->isLastOperationWrite = FALSE;
     shmBuffPointer->buffer = (char *) (&shmBuffPointer->buffer + sizeof(char));
 
     return shmBuffPointer;
@@ -49,7 +51,11 @@ void sleepWriter(ShmBuffCDT shmBuffPointer, int size) {
     int distance = shmBuffPointer->last - shmBuffPointer->first;
     distance = (isLastGreaterThanFirst) ? distance : distance + shmBuffPointer->size;
 
-    if (distance + size >= shmBuffPointer->size) {
+    if(distance == 0 && shmBuffPointer->isLastOperationWrite){
+        distance = shmBuffPointer->size;
+    }
+
+    if (distance + size > shmBuffPointer->size) {
         shmBuffPointer->writerPid = getpid();
         kill(shmBuffPointer->writerPid, SIGSTOP);
     }
@@ -67,6 +73,10 @@ void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
     int isLastGreaterThanFirst = shmBuffPointer->last >= shmBuffPointer->first;
     int distance = shmBuffPointer->last - shmBuffPointer->first;
     distance = (isLastGreaterThanFirst) ? distance : distance + shmBuffPointer->size;
+
+    if(distance == 0 && shmBuffPointer->isLastOperationWrite){
+        distance = shmBuffPointer->size;
+    }
 
     if(distance < size) {
         shmBuffPointer->readerPid = getpid();
@@ -91,10 +101,10 @@ void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
         if(shmBuffPointer->last >= shmBuffPointer->size) {
             shmBuffPointer->last = START;
         }
-
         shmBuffPointer->buffer[shmBuffPointer->last] = string[i];
         shmBuffPointer->last++;
     }
+    shmBuffPointer->isLastOperationWrite = TRUE;
 
     sem_post(&shmBuffPointer->sem);
 
@@ -112,6 +122,7 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
         buffer[i] = shmBuffPointer->buffer[shmBuffPointer->first];
         shmBuffPointer->first++;
     }
+    shmBuffPointer->isLastOperationWrite = FALSE;
 
     sem_post(&shmBuffPointer->sem);
 

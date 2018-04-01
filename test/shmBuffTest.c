@@ -6,6 +6,7 @@ struct ShmBuff {
     int size;
     long int writerPid;
     long int readerPid;
+    int isLastOperationWrite;
     sem_t sem;
     char *buffer;
 };
@@ -39,7 +40,7 @@ void whenWriteInShmBuff(ShmBuffCDT shmBuffPointer) {
 }
 
 void thenIsWrittenInShmBuff(ShmBuffCDT shmBuffPointer) {
-    CU_ASSERT(strcmp(shmBuffPointer->buffer, STRING_TO_WRITE)==0);
+    CU_ASSERT(strcmp(shmBuffPointer->buffer, STRING_TO_WRITE) == 0);
 }
 
 void testReadFromShmBuff() {
@@ -51,6 +52,8 @@ void testReadFromShmBuff() {
     whenReadFromShmBuff(shmBuffPointer, buffer);
 
     thenDataIsInBuffer(buffer);
+
+    shm_unlink(SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuffWithData() {
@@ -69,13 +72,14 @@ void thenDataIsInBuffer(char *buffer) {
 
 void testWriteInShmBuffAfterRead() {
     ShmBuffCDT shmBuffPointer;
-    char buffer[SHM_BUFF_SIZE];
 
     shmBuffPointer = givenAShmBuffWithDataAfterRead();
 
-    thenIsWrittenInShmBuff(shmBuffPointer);
+    whenWriteInShmBuff(shmBuffPointer);
 
     thenIsWrittenInShmBuffAfterRead(shmBuffPointer);
+
+    shm_unlink(SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuffWithDataAfterRead() {
@@ -86,5 +90,67 @@ ShmBuffCDT givenAShmBuffWithDataAfterRead() {
 }
 
 void thenIsWrittenInShmBuffAfterRead(ShmBuffCDT shmBuffPointer) {
-    CU_ASSERT(strcmp(shmBuffPointer->buffer, STRING_AFTER_READ));
+    CU_ASSERT(strcmp(shmBuffPointer->buffer, STRING_AFTER_READ) == 0);
+}
+
+void testReadInShmBuffAfterReadAndWrite() {
+    ShmBuffCDT shmBuffPointer;
+    char buffer[SHM_BUFF_SIZE];
+
+    shmBuffPointer = givenAShmBuffWithDataAfterReadAndWrite();
+    whenReadFromShmBuff(shmBuffPointer, buffer);
+
+    thenDataIsInBuffer(buffer);
+
+    shm_unlink(SHM_BUFF_NAME);
+}
+
+ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite() {
+    ShmBuffCDT shmBuffPointer = givenAShmBuffWithDataAfterRead();
+    char buffer[SIZE_TO_READ];
+    whenWriteInShmBuff(shmBuffPointer);
+    readFromShmBuff(shmBuffPointer, buffer, 2);
+    return shmBuffPointer;
+}
+
+void testReadAndWriteDifferentProcess() {
+    ShmBuffCDT shmBuffPointer;
+    int pid = fork();
+    char buffer[SIZE_TO_READ];
+
+    shmBuffPointer = givenAShmBuffTwoProces(pid);
+
+    whenReadAndWriteDifferentProcess(shmBuffPointer, pid, buffer);
+
+    thenReadWhatTheOtherWrote(buffer, pid);
+
+    shm_unlink(SHM_BUFF_NAME);
+}
+
+ShmBuffCDT givenAShmBuffTwoProces(int pid) {
+    ShmBuffCDT shmBuffPointer;
+    if(pid != 0) {
+        shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
+    } else {
+        shmBuffPointer = shmBuffAlreadyInit(SHM_BUFF_NAME);
+    }
+    return shmBuffPointer;
+}
+
+void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid, char *buffer) {
+    if(pid != 0) {
+        writeInShmBuff(shmBuffPointer, STRING_TO_WRITE, sizeof(STRING_TO_WRITE));
+        int status;
+        waitpid(pid, &status, WNOHANG);
+        exit(0);
+    } else {
+        readFromShmBuff(shmBuffPointer, buffer, sizeof(STRING_TO_WRITE));
+    }
+}
+
+void thenReadWhatTheOtherWrote(char *buffer, int pid) {
+    if(pid == 0) {
+        printf("%s\n",buffer);
+        CU_ASSERT(strcmp(buffer, STRING_TO_WRITE)==0);
+    }
 }
