@@ -32,7 +32,7 @@
         }
         ```
 
-* Pointer types variables: asterisk next to variable name
+* Pointer types variables: asterisk next to variable name (except1 `void *` type)
 
     * Example:
         ```c
@@ -44,7 +44,7 @@
         }
         ```
 
-    * Except VOID:
+    * Except `void *` type:
         ```c
         void * variable;
 

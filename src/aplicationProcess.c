@@ -42,9 +42,6 @@ int getSlaveQuantity(int fileQuantity) {
 }
 
 int getNumberOfProcessors() {
-    int stdoutBackupFd = dup(STDOUT_FILENO);
-    close(STDOUT_FILENO);
-
     int fd[2];
     if(pipe(fd) == ERROR_STATE) {
         error(MKPIPE_ERROR);
@@ -59,6 +56,11 @@ int getNumberOfProcessors() {
         if(close(fd[0]) == ERROR_STATE) {
             error(CLOSE_ERROR);
         }
+
+        if(dup2(fd[1], STDOUT_FILENO) == ERROR_STATE) {
+            error(DUP_ERROR);
+        }
+
         if(execl(NPROC_BIN_PATH, NPROC_BIN_NAME, NULL) == ERROR_STATE) {
             error(EXEC_ERROR(NRPC_BIN_PATH));
         }
@@ -68,17 +70,18 @@ int getNumberOfProcessors() {
             error(CLOSE_ERROR);
         }
 
-        if(dup2(stdoutBackupFd, STDOUT_FILENO) == ERROR_STATE) {
-            error(DUP_ERROR);
-        }
-
         int status;
         waitpid(pid, &status, 0);
 
-        //read(fd[0])
+        char buffer[MAX_CORE_DIGITS] = {0};
+        if(read(fd[0], buffer, MAX_CORE_DIGITS) == ERROR_STATE) {
+            error(READ_ERROR);
+        }
 
-        //return
+        return stringToInt(buffer);
     }
+
+    return ERROR_STATE;
 }
 
 int makeAvailableSlavesQueue() {

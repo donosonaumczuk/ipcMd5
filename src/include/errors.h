@@ -19,6 +19,7 @@
 #define OPEN_FIFO_ERROR(fifoName) "Error when trying to open " #fifoName " fifo"
 #define MKPIPE_ERROR "Error when trying to make pipe"
 #define CLOSE_ERROR "Error when trying to close a file descriptor through close"
+#define READ_ERROR "Error when trying to read a file descriptor through read"
 
 int error(char * errorMessage);
 int errorToStderr(char * errorMessage);
