@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -9,6 +10,9 @@
 #include <string.h>
 #include "include/slave.h"
 #include "include/errors.h"
+#include "include/tools.h"
+
+#include <ctype.h>
 
 static void obtainHash(int fd, char *hash);
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filepath);
@@ -66,7 +70,34 @@ static void obtainHash(int fd, char *hash) {
 
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
    write(fd, filePath, strlen(filePath));
-   write(fd, ": ", 2);
+   write(fd, ": ", strlen(": "));
    write(fd, hash, HASH_MD5_LENGTH + 1);
 
+}
+
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
+   char *filePathToHash;
+   while(number) {
+      filePathToHash = getPath(fdpaths);
+      //if(isValidFile)
+         writeHashOnFd(fdmd5,filePathToHash);
+      number --;
+   } 
+}
+
+int getNumberOfFilePaths(int fd) {
+   char buffer[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1];
+   read(fd, buffer, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY);
+   buffer[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY] = 0;
+   return stringToInt(buffer);
+   //falta consumir solo digitos y leer la coma
+}
+
+
+void waitForAnswer(int fd) {
+   fd_set readFds;
+   FD_ZERO(&readFds);
+   FD_SET(fd, &readFds);
+   if(select(fd + 1, &readFds, NULL, NULL, NULL) == ERROR_STATE)
+      error("");
 }
