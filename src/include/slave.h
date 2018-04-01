@@ -11,5 +11,7 @@ char *getPath(int fd);
 void writeHashOnFd(int fd, char *filePath);
 int givenAFileDescriptorWithSomethingWritten();
 void waitForAnswer(int fd);
+void readNumber(int fd, char *buffer, int count);
+int getNumberOfFilePaths(int fd);
 
 #endif

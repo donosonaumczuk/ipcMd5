@@ -86,13 +86,28 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
 }
 
 int getNumberOfFilePaths(int fd) {
-   char buffer[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1];
-   read(fd, buffer, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY);
-   buffer[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY] = 0;
-   return stringToInt(buffer);
-   //falta consumir solo digitos y leer la coma
+   char quantity[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1], commaAndSpace[2];
+   readNumber(fd, quantity, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY);
+   if(read(fd, commaAndSpace, 2) == ERROR_STATE)
+      error("");
+   return stringToInt(quantity);
 }
 
+void readNumber(int fd, char *buffer, int count) {
+   int i = 0, readquantity;
+   char aux;
+   do {
+      readquantity = read(fd, &aux, 1);
+      if(readquantity == ERROR_STATE)
+         error(""); 
+      if(readquantity && isdigit(aux)) {
+         buffer[i] = aux;
+         i++;
+      }
+
+   } while(i < count && isdigit(aux) && readquantity);
+   buffer[i] = 0;
+}
 
 void waitForAnswer(int fd) {
    fd_set readFds;
