@@ -83,6 +83,7 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
       //if(isValidFile)
          writeHashOnFd(fdmd5,filePathToHash);
       number --;
+      free(filePathToHash);
    } 
 }
 

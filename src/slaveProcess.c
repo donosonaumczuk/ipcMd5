@@ -27,7 +27,11 @@ int main() {
    do {
       waitForAnswer(fifoPaths);
       number = getNumberOfFilePaths();
-      hashFilesOfGivenPaths(number, fdpaths, fdmd5);
+      if(number) {
+         hashFilesOfGivenPaths(number, fdpaths, fdmd5);
+         if(write(fdrequest, fifoPaths) == ERROR_STATUS)
+            error("");
+      }
    } while(number);
 
    close(fdpaths);
