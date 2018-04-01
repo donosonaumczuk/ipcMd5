@@ -36,7 +36,7 @@ int main() {
    return 0;
 }
 
-void createFifo(char *name, int fdrequest) {
+void createFilePathFifo(char *name, int fdrequest) {
    sprinf(name, "%d", getpid());
    if(mkfifo(name, S_IRUSR | S_IWUSR) == ERROR_STATUS)
       error("Couldn't make fifo named: %s\n", name);
