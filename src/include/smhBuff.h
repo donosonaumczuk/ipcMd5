@@ -2,13 +2,14 @@
 
 #define SHMBUFF_H
 
-#include <fcntl.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 #include <semaphore.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <signal.h>
+#include "errors.h"
 
 #define PID_DEFAULT 0
 #define START 0

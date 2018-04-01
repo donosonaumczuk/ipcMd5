@@ -22,6 +22,15 @@
 #define CLOSE_ERROR "Error when trying to close a file descriptor through close"
 #define READ_ERROR "Error when trying to read a file descriptor through read"
 #define ALLOCATE_MEM_ERROR "Error when trying to allocate memory"
+#define OPEN_SHARE_MEMORY_ERROR "Error when trying to open a share memory object"
+#define TRUNCATE_ERROR "Error when trying to extend share memory"
+#define MAP_ERROR "Error trying to map share memory"
+#define STAT_ERROR "Error trying to read share memory status"
+#define KILL_ERROR "Error trying to send a message to a process"
+#define SEMAPHORE_ERROR "Error trying to operate with semaphore"
+#define UNMAP_ERROR "Error trying to unmap share memory"
+#define UNLINK_SHARED_MEMORY_ERROR "Error trying to delete share memory object"
+
 
 int error(char * errorMessage);
 int errorToStderr(char * errorMessage);

@@ -16,11 +16,26 @@ struct ShmBuff {
 //--------------------------------------------------------------------------------
 
 ShmBuffCDT shmBuffInit(int size, char *shmName) {
-    int fd = shm_open(shmName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    ftruncate(fd, sizeof(size * sizeof(char) + sizeof(struct ShmBuff)));
-    ShmBuffCDT shmBuffPointer = mmap(NULL, size * sizeof(char) + sizeof(struct ShmBuff),
-                                     PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET);
-    close(fd);
+    int fd;
+    if((fd = shm_open(shmName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR))
+       == ERROR_STATE) {
+        error(OPEN_SHARE_MEMORY_ERROR);
+    }
+
+    if(ftruncate(fd, sizeof(size * sizeof(char) + sizeof(struct ShmBuff)))
+       == ERROR_STATE) {
+        error(TRUNCATE_ERROR);
+    }
+
+    ShmBuffCDT shmBuffPointer;
+    if((shmBuffPointer = mmap(NULL, size * sizeof(char) + sizeof(struct ShmBuff),
+       PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET)) == ERROR_STATE) {
+           error(MAP_ERROR);
+    }
+
+    if(close(fd) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
 
     shmBuffPointer->first = START;
     shmBuffPointer->last = START;
@@ -36,12 +51,24 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
 
 ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
     struct stat stat;
-    int fd = shm_open(shmName, O_RDWR, S_IRUSR | S_IWUSR);
+    int fd;
+    if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
+        error(OPEN_SHARE_MEMORY_ERROR);
+    }
 
-    fstat(fd, &stat);
-    ShmBuffCDT shmBuffPointer = mmap(NULL, stat.st_size, PROT_READ | PROT_WRITE,
-                                     MAP_SHARED, fd, OFF_SET);
-    close(fd);
+    if(fstat(fd, &stat) == ERROR_STATE) {
+        error(STAT_ERROR);
+    }
+
+    ShmBuffCDT shmBuffPointer;
+    if((shmBuffPointer = mmap(NULL, stat.st_size, PROT_READ | PROT_WRITE,
+       MAP_SHARED, fd, OFF_SET)) == ERROR_STATE) {
+        error(MAP_ERROR);
+    }
+
+    if(close(fd) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
 
     return shmBuffPointer;
 }
@@ -56,12 +83,18 @@ void sleepWriter(ShmBuffCDT shmBuffPointer, int size) {
     }
 
     if (distance + size > shmBuffPointer->size) {
-        sem_wait(&shmBuffPointer->sem);
+        if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
+            error(SEMAPHORE_ERROR);
+        }
 
         shmBuffPointer->writerPid = getpid();
-        kill(shmBuffPointer->writerPid, SIGSTOP);
+        if(kill(shmBuffPointer->writerPid, SIGSTOP) == ERROR_STATE) {
+            error(KILL_ERROR);
+        }
 
-        sem_post(&shmBuffPointer->sem);
+        if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
+            error(SEMAPHORE_ERROR);
+        }
     }
 }
 
@@ -69,7 +102,9 @@ void wakeupWriter(ShmBuffCDT shmBuffPointer) {
     int isWriterSleep = shmBuffPointer->writerPid;
 
     if(isWriterSleep) {
-        kill(shmBuffPointer->writerPid, SIGCONT);
+        if(kill(shmBuffPointer->writerPid, SIGCONT) == ERROR_STATE) {
+            error(KILL_ERROR);
+        }
         shmBuffPointer->writerPid = PID_DEFAULT;
     }
 }
@@ -84,12 +119,18 @@ void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
     }
 
     if(distance < size) {
-        sem_post(&shmBuffPointer->sem);
+        if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
+            error(SEMAPHORE_ERROR);
+        }
 
         shmBuffPointer->readerPid = getpid();
-        kill(shmBuffPointer->readerPid, SIGSTOP);
+        if(kill(shmBuffPointer->readerPid, SIGSTOP) == ERROR_STATE) {
+            error(KILL_ERROR);
+        }
 
-        sem_wait(&shmBuffPointer->sem);
+        if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
+            error(SEMAPHORE_ERROR);
+        }
     }
 }
 
@@ -97,13 +138,17 @@ void wakeupReader(ShmBuffCDT shmBuffPointer) {
     int isReaderSleep = shmBuffPointer->readerPid;
 
     if(isReaderSleep) {
-        kill(shmBuffPointer->readerPid, SIGCONT);
+        if(kill(shmBuffPointer->readerPid, SIGCONT) == ERROR_STATE) {
+            error(KILL_ERROR);
+        }
         shmBuffPointer->readerPid = PID_DEFAULT;
     }
 }
 
 void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
-    sem_wait(&shmBuffPointer->sem);
+    if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
+        error(SEMAPHORE_ERROR);
+    }
 
     sleepWriter(shmBuffPointer, size);
 
@@ -118,11 +163,15 @@ void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
 
     wakeupReader(shmBuffPointer);
 
-    sem_post(&shmBuffPointer->sem);
+    if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
+        error(SEMAPHORE_ERROR);
+    }
 }
 
 void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
-    sem_wait(&shmBuffPointer->sem);
+    if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
+        error(SEMAPHORE_ERROR);
+    }
 
     sleepReader(shmBuffPointer, size);
 
@@ -137,19 +186,33 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
 
     wakeupWriter(shmBuffPointer);
 
-    sem_post(&shmBuffPointer->sem);
+    if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
+        error(SEMAPHORE_ERROR);
+    }
 }
 
 void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
     unmapShareMemory(shmBuffPointer, shmName);
-    shm_unlink(shmName);
+    if(shm_unlink(shmName) == ERROR_STATE) {
+        error(UNLINK_SHARED_MEMORY_ERROR);
+    }
 }
 
 void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
     struct stat stat;
-    int fd = shm_open(shmName, O_RDWR, S_IRUSR | S_IWUSR);
-    fstat(fd, &stat);
+    int fd;
+    if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
+        error(OPEN_SHARE_MEMORY_ERROR);
+    }
 
-    munmap(shmBuffPointer, stat.st_size);
-    close(fd);
+    if(fstat(fd, &stat) == ERROR_STATE) {
+        error(STAT_ERROR);
+    }
+
+    if(munmap(shmBuffPointer, stat.st_size) == ERROR_STATE) {
+        error(UNMAP_ERROR);
+    }
+    if(close(fd) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
 }
