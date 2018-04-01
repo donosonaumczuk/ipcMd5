@@ -8,12 +8,8 @@ struct ShmBuff {
     long int readerPid;
     sem_t sem;
     int isLastOperationWrite;
-    char *buffer;
+    signed char *buffer;
 };
-
-//--------------------------------------------------------------------------------
-//QUE NO  ME OLVIDE DE LOS ERRORES
-//--------------------------------------------------------------------------------
 
 ShmBuffCDT shmBuffInit(int size, char *shmName) {
     int fd;
@@ -22,13 +18,13 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
         error(OPEN_SHARE_MEMORY_ERROR);
     }
 
-    if(ftruncate(fd, sizeof(size * sizeof(char) + sizeof(struct ShmBuff)))
+    if(ftruncate(fd, sizeof(size * sizeof(signed char) + sizeof(struct ShmBuff)))
        == ERROR_STATE) {
         error(TRUNCATE_ERROR);
     }
 
     ShmBuffCDT shmBuffPointer;
-    if((shmBuffPointer = mmap(NULL, size * sizeof(char) + sizeof(struct ShmBuff),
+    if((shmBuffPointer = mmap(NULL, size * sizeof(signed char) + sizeof(struct ShmBuff),
        PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET)) == ERROR_STATE) {
            error(MAP_ERROR);
     }
@@ -44,7 +40,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
     shmBuffPointer->writerPid = PID_DEFAULT;
     sem_init(&shmBuffPointer->sem, IS_SHARE, SEM_INIT_VALUE);
     shmBuffPointer->isLastOperationWrite = FALSE;
-    shmBuffPointer->buffer = (char *) (&shmBuffPointer->buffer + sizeof(char));
+    shmBuffPointer->buffer = (signed char *) (&shmBuffPointer->buffer + sizeof(signed char));
 
     return shmBuffPointer;
 }
@@ -145,7 +141,7 @@ void wakeupReader(ShmBuffCDT shmBuffPointer) {
     }
 }
 
-void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
+void writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size) {
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_ERROR);
     }
@@ -168,7 +164,7 @@ void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
     }
 }
 
-void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
+void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size) {
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_ERROR);
     }
@@ -189,6 +185,12 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
     if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_ERROR);
     }
+}
+
+void closeShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+    signed char eof = EOF;
+    writeInShmBuff(shmBuffPointer, &eof, 1);
+    freeAndUnmapShareMemory(shmBuffPointer, shmName);
 }
 
 void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {

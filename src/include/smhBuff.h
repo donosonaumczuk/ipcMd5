@@ -18,14 +18,16 @@
 #define OFF_SET 0
 #define FALSE 0
 #define TRUE 1
+#define EOF -1
 
 typedef struct ShmBuff *ShmBuffCDT;
 
 ShmBuffCDT shmBuffInit(int size, char *shmName);
 ShmBuffCDT shmBuffAlreadyInit(char *shmName);
-void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size);
-void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size);
+void writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size);
+void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size);
 void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
 void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
+void closeShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
 
 #endif
