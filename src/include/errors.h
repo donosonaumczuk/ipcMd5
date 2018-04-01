@@ -1,6 +1,7 @@
 #ifndef ERRORS_H
 
-#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define ERRORS_H
 
@@ -20,6 +21,7 @@
 #define MKPIPE_ERROR "Error when trying to make pipe"
 #define CLOSE_ERROR "Error when trying to close a file descriptor through close"
 #define READ_ERROR "Error when trying to read a file descriptor through read"
+#define ALLOCATE_MEM_ERROR "Error when trying to allocate memory"
 
 int error(char * errorMessage);
 int errorToStderr(char * errorMessage);

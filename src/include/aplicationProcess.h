@@ -2,9 +2,14 @@
 
 #define APLICATION_PROCESS_H
 
-#include "ipcMd5.h"
 #include <sys/types.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "tools.h"
+#include "ipcMd5.h"
+#include "errors.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -14,6 +19,14 @@
 #define SLAVE_BIN_NAME "slave"
 #define MAX_CORE_DIGITS 3
 
-/* add functions prototypes */
+int *makeFileToHashQueues(pid_t *slavePids, int slaveQuantity);
+int main(int argc, char const *argv[]);
+int getSlaveQuantity(int fileQuantity);
+pid_t *makeSlaves(int slaveQuantity);
+void * allocateMemory(size_t bytes);
+int makeAvailableSlavesQueue();
+int getNumberOfProcessors();
+int makeMd5ResultQueue();
+
 
 #endif

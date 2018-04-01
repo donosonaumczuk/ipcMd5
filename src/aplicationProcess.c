@@ -1,4 +1,4 @@
-#include "aplicationProcess.h"
+#include "include/aplicationProcess.h"
 
 int main(int argc, char const *argv[]) {
     if(argc < 2) {
@@ -6,19 +6,29 @@ int main(int argc, char const *argv[]) {
     }
     else {
         int fileQuantity = argc - 1;
+
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
-        pid_t slavePids[slaveQuantity] = {0};
-        makeSlaves(slavePids, slaveQuantity);
+        pid_t *slavePids = makeSlaves(slaveQuantity);
 
         int fdAvailableSlavesQueue = makeAvailableSlavesQueue();
 
-        int fileToHashFds[slaveQuantity] = {0};
-        makeFileToHashQueues(fileToHashFds, slavePids, slaveQuantity);
+        int *fileToHashFds = makeFileToHashQueues(slavePids, slaveQuantity);
+
+        // freeResources();
     }
 
-    freeResources(); //may be not needed... but... to don't forget
     return 0;
+}
+
+void * allocateMemory(size_t bytes) {
+    void * address = malloc(bytes);
+
+    if(address == NULL) {
+        errorToStderr(ALLOCATE_MEM_ERROR);
+    }
+
+    return address;
 }
 
 int getSlaveQuantity(int fileQuantity) {
@@ -43,6 +53,7 @@ int getSlaveQuantity(int fileQuantity) {
 
 int getNumberOfProcessors() {
     int fd[2];
+    int numberOfProcessors = 0;
     if(pipe(fd) == ERROR_STATE) {
         error(MKPIPE_ERROR);
     }
@@ -78,37 +89,46 @@ int getNumberOfProcessors() {
             error(READ_ERROR);
         }
 
-        return stringToInt(buffer);
+        numberOfProcessors = stringToInt(buffer);
     }
 
-    return ERROR_STATE;
+    return numberOfProcessors;
 }
 
 int makeAvailableSlavesQueue() {
     if(mkfifo(AVAILABLE_SLAVES_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
-        return ERROR_STATE;
+        error(MKFIFO_ERROR);
     }
 
-    return open(AVAILABLE_SLAVES_QUEUE, O_RDONLY);
+    int fd;
+    if((fd = open(AVAILABLE_SLAVES_QUEUE, O_RDONLY)) == ERROR_STATE) {
+        error(OPEN_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
+    }
+
+    return fd;
 }
 
-void makeFileToHashQueues(int *fileToHashQueues, int slaveQuantity,
-    pid_t *slavePids) {
+int *makeFileToHashQueues(pid_t *slavePids, int slaveQuantity) {
+    int *fileToHashQueues = (int *) allocateMemory(slaveQuantity * sizeof(int));
     char pidString[MAX_LONG_DIGITS] = {0};
     for(int i = 0; i < slaveQuantity; i++) {
         sprintf(pidString, "%d", slavePids[i]);
         if(mkfifo(pidString, S_IRUSR | S_IWUSR) == ERROR_STATE) {
             error(MKFIFO_ERROR);
         }
-        if((fileToHashQueues[i] = open(fifoName, O_RDONLY)) == ERROR_STATE) {
+        if((fileToHashQueues[i] = open(pidString, O_RDONLY)) == ERROR_STATE) {
             error(OPEN_FIFO_ERROR(fileToHashQueues[i]));
         }
     }
+
+    return fileToHashQueues;
 }
 
-void makeSlaves(int *slavePids, int slaveQuantity) {
+pid_t *makeSlaves(int slaveQuantity) {
     int isChild = FALSE;
     int errorState = OK_STATE;
+
+    pid_t *slavePids = (pid_t *) allocateMemory(slaveQuantity * sizeof(pid_t));
 
     for(int i = 0; i < slaveQuantity && !isChild
         && errorState == OK_STATE; i++) {
@@ -133,6 +153,8 @@ void makeSlaves(int *slavePids, int slaveQuantity) {
             error(EXEC_ERROR(SLAVE_BIN_PATH));
         }
     }
+
+    return slavePids;
 }
 
 int makeMd5ResultQueue() {
