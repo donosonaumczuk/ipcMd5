@@ -5,7 +5,9 @@ int main(int argc, char const *argv[]) {
       errorToStderr(/*poner eso*/);
     }
 
+    ShmBuffCDT shareMemory = shmBuffAlreadyInit(argv[0]);
 
+    
 
     return 0;
 }

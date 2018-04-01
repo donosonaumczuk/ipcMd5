@@ -18,7 +18,7 @@ int main()
    }
 
    /* add the tests to the suite */
-   if((CU_add_test(slaveSuite, "test of Writting a Hash on a fifo.\n", testWriteHashOnAFIFO) == NULL)
+   if((CU_add_test(slaveSuite, "test of Writting a Hash on a fifo", testWriteHashOnAFIFO) == NULL)
     || (CU_add_test(slaveSuite, "test of read a file path()", testReadAFilePath) == NULL)
     || (CU_add_test(slaveSuite, "test of read a quantity from a file()", testOfReadingTheQuantityOfFilePathsToHash) == NULL)
     || (CU_add_test(ShmBuffSuite, "test to write in share memory", testWriteInShmBuff) == NULL)
@@ -33,6 +33,6 @@ int main()
    CU_basic_set_mode(CU_BRM_VERBOSE);
    CU_basic_run_tests();
    CU_cleanup_registry();
+   printf("\n");
    return CU_get_error();
 }
-

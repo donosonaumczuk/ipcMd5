@@ -28,7 +28,7 @@ void testWriteInShmBuff() {
 
     thenIsWrittenInShmBuff(shmBuffPointer);
 
-    shm_unlink(SHM_BUFF_NAME);
+    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuff() {
@@ -53,7 +53,7 @@ void testReadFromShmBuff() {
 
     thenDataIsInBuffer(buffer);
 
-    shm_unlink(SHM_BUFF_NAME);
+    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuffWithData() {
@@ -79,7 +79,7 @@ void testWriteInShmBuffAfterRead() {
 
     thenIsWrittenInShmBuffAfterRead(shmBuffPointer);
 
-    shm_unlink(SHM_BUFF_NAME);
+    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuffWithDataAfterRead() {
@@ -102,7 +102,7 @@ void testReadInShmBuffAfterReadAndWrite() {
 
     thenDataIsInBuffer(buffer);
 
-    shm_unlink(SHM_BUFF_NAME);
+    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite() {
@@ -124,7 +124,7 @@ void testReadAndWriteDifferentProcess() {
 
     thenReadWhatTheOtherWrote(buffer, pid);
 
-    shm_unlink(SHM_BUFF_NAME);
+    unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuffCDT givenAShmBuffTwoProces(int pid) {

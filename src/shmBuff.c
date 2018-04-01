@@ -36,9 +36,9 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
 
 ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
     struct stat stat;
-    int fd = shm_open(shmName, O_RDWR, 0);
+    int fd = shm_open(shmName, O_RDWR, S_IRUSR | S_IWUSR);
 
-    fstat(fd,&stat);
+    fstat(fd, &stat);
     ShmBuffCDT shmBuffPointer = mmap(NULL, stat.st_size, PROT_READ | PROT_WRITE,
                                      MAP_SHARED, fd, OFF_SET);
     close(fd);
@@ -67,6 +67,7 @@ void sleepWriter(ShmBuffCDT shmBuffPointer, int size) {
 
 void wakeupWriter(ShmBuffCDT shmBuffPointer) {
     int isWriterSleep = shmBuffPointer->writerPid;
+
     if(isWriterSleep) {
         kill(shmBuffPointer->writerPid, SIGCONT);
         shmBuffPointer->writerPid = PID_DEFAULT;
@@ -94,6 +95,7 @@ void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
 
 void wakeupReader(ShmBuffCDT shmBuffPointer) {
     int isReaderSleep = shmBuffPointer->readerPid;
+
     if(isReaderSleep) {
         kill(shmBuffPointer->readerPid, SIGCONT);
         shmBuffPointer->readerPid = PID_DEFAULT;
@@ -115,6 +117,7 @@ void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
     shmBuffPointer->isLastOperationWrite = TRUE;
 
     wakeupReader(shmBuffPointer);
+
     sem_post(&shmBuffPointer->sem);
 }
 
@@ -135,4 +138,18 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
     wakeupWriter(shmBuffPointer);
 
     sem_post(&shmBuffPointer->sem);
+}
+
+void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+    unmapShareMemory(shmBuffPointer, shmName);
+    shm_unlink(shmName);
+}
+
+void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+    struct stat stat;
+    int fd = shm_open(shmName, O_RDWR, S_IRUSR | S_IWUSR);
+    fstat(fd, &stat);
+
+    munmap(shmBuffPointer, stat.st_size);
+    close(fd);
 }

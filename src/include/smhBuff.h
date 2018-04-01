@@ -24,5 +24,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName);
 ShmBuffCDT shmBuffAlreadyInit(char *shmName);
 void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size);
 void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size);
+void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
+void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
 
 #endif
