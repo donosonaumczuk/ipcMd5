@@ -32,7 +32,7 @@
         }
         ```
 
-* Pointer types variables: asterisk next to variable name (except1 `void *` type)
+* Pointer types variables: asterisk next to variable name (except `void *` type)
 
     * Example:
         ```c
