@@ -11,11 +11,6 @@
 
 int initSlaveSuite();
 int cleanSlaveSuite();
-void testWriteAHashOnAFile();
-void givenAFileDescriptorThatIsEmpty(int *fd);
-void givenAPathOfAFile();
-void whenHashIsWrittenOnAFile(int fd, char *filePath);
-void thenFileIsWrittenCorrectly(int emptyFileFd);
 
 void testReadAFilePath();
 int givenAFileDescriptorWithSomethingWritten();
@@ -27,5 +22,11 @@ char *givenAFifo();
 char *givenThePathOfAFileToHash();
 void whenASlaveWritesAHashOnAFifo(char *fifoName, char *filePathToHash);
 void thenHashIsWrittenOnAFifo(char *fifoName);
-	
+
+void testOfReadingTheQuantityOfFilePathsToHash();
+void givenAFileDescriptorToReadAQuantity(int *fd);	
+void givenAValidQuantityToReadOnAFile(int fd, int actualQuantity);
+int whenTheNumberIsRead(int fd);
+void thenTheQuantityiesMustBeTheSame(int actualQuantity, int readQuantity);
+
 #endif
