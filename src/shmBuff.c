@@ -56,8 +56,12 @@ void sleepWriter(ShmBuffCDT shmBuffPointer, int size) {
     }
 
     if (distance + size > shmBuffPointer->size) {
+        sem_wait(&shmBuffPointer->sem);
+
         shmBuffPointer->writerPid = getpid();
         kill(shmBuffPointer->writerPid, SIGSTOP);
+
+        sem_post(&shmBuffPointer->sem);
     }
 }
 
@@ -79,8 +83,12 @@ void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
     }
 
     if(distance < size) {
+        sem_post(&shmBuffPointer->sem);
+
         shmBuffPointer->readerPid = getpid();
         kill(shmBuffPointer->readerPid, SIGSTOP);
+
+        sem_wait(&shmBuffPointer->sem);
     }
 }
 
@@ -93,9 +101,9 @@ void wakeupReader(ShmBuffCDT shmBuffPointer) {
 }
 
 void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
-    sleepWriter(shmBuffPointer, size);
-
     sem_wait(&shmBuffPointer->sem);
+
+    sleepWriter(shmBuffPointer, size);
 
     for (int i = 0; i < size; i++) {
         if(shmBuffPointer->last >= shmBuffPointer->size) {
@@ -106,15 +114,15 @@ void writeInShmBuff(ShmBuffCDT shmBuffPointer, char *string, int size) {
     }
     shmBuffPointer->isLastOperationWrite = TRUE;
 
-    sem_post(&shmBuffPointer->sem);
-
     wakeupReader(shmBuffPointer);
+    sem_post(&shmBuffPointer->sem);
 }
 
 void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
+    sem_wait(&shmBuffPointer->sem);
+
     sleepReader(shmBuffPointer, size);
 
-    sem_wait(&shmBuffPointer->sem);
     for (int i = 0; i < size; i++) {
         if(shmBuffPointer->first == shmBuffPointer->size) {
             shmBuffPointer->first = START;
@@ -124,7 +132,7 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer, int size) {
     }
     shmBuffPointer->isLastOperationWrite = FALSE;
 
-    sem_post(&shmBuffPointer->sem);
-
     wakeupWriter(shmBuffPointer);
+
+    sem_post(&shmBuffPointer->sem);
 }

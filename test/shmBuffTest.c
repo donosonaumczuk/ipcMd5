@@ -150,7 +150,6 @@ void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid, char *
 
 void thenReadWhatTheOtherWrote(char *buffer, int pid) {
     if(pid == 0) {
-        printf("%s\n",buffer);
         CU_ASSERT(strcmp(buffer, STRING_TO_WRITE)==0);
     }
 }
