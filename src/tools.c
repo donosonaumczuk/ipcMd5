@@ -19,3 +19,9 @@ void * allocateMemory(size_t bytes) {
 
     return address;
 }
+
+int isValidFilePath(char *filePath) {
+   struct stat pathStat;
+    stat(filePath, &pathStat);
+    return S_ISREG(pathStat.st_mode);
+}
