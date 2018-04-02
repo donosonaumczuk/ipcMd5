@@ -2,6 +2,7 @@
 #define SLAVE_PROCESS_H
 
 #include <slave.h>
+#include <ipcMd5.h>
 
 void createFilePathFifo(char *name, int fdrequest);
 

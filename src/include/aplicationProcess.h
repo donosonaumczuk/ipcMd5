@@ -11,6 +11,8 @@
 #include <tools.h>
 #include <ipcMd5.h>
 #include <errors.h>
+#include <sys/select.h>
+#include <errno.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -35,6 +37,10 @@ pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
 int makeAvailableSlavesQueue();
 int getNumberOfProcessors();
 int makeMd5ResultQueue();
-
+int readSlavePidString(int fdAvailableSlavesQueue, char *pidString);
+void sendNextFile(char *fifoName, char const *filePath);
+int getFileLoad(int slaveQuantity, int fileQuantity);
+int monitorFds(int maxFd, fd_set *fdSetPointer);
+fd_set getFdSet(int fdAvailableSlavesQueue, int fdMd5Queue, int * maxFd);
 
 #endif

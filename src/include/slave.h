@@ -27,5 +27,6 @@ int givenAFileDescriptorWithSomethingWritten();
 void waitForAnswer(int fd);
 void readNumber(int fd, char *buffer, int count);
 int getNumberOfFilePaths(int fd);
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5);
 
 #endif
