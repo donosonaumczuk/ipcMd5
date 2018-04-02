@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
-#include "tools.h"
-#include "ipcMd5.h"
-#include "errors.h"
+#include <tools.h>
+#include <ipcMd5.h>
+#include <errors.h>
 
 #define TRUE 1
 #define FALSE 0

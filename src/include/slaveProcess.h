@@ -1,7 +1,7 @@
 #ifndef SLAVE_PROCESS_H
 #define SLAVE_PROCESS_H
 
-#include "slave.h"
+#include <slave.h>
 
 void createFilePathFifo(char *name, int fdrequest);
 

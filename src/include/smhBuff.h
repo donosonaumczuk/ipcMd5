@@ -9,7 +9,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <signal.h>
-#include "errors.h"
+#include <errors.h>
 #include <errno.h>
 #include <stdio.h>
 

@@ -1,24 +1,8 @@
-
-EXEC     = $(shell basename $$(pwd))
-CC       = gcc
-
+CC	=	gcc
 CFLAGS   = -std=c99 -Wall -pedantic -I ./include
 
-SRC      = $(wildcard *.c)
-OBJ      = $(SRC:.c=.o)
-
-all: $(EXEC)
-
-${EXEC}: $(OBJ)
-	$(CC) -o $@ $^ 
-
-%.o: %.c
-	$(CC) -o $@ -c $< $(CFLAGS)
-
-.PHONY: clean mrproper
+all:
+	$(CC) $(CFLAGS)	aplicationProcess.c errors.c tools.c -o aplicationProcess.out
+	$(CC) $(CFLAGS)	slaveProcess.c slave.c tools.c errors.c -o slaveProcess.out
 
 clean:
-	@rm -rf *.o
-
-mrproper: clean
-	@rm -rf $(EXEC)

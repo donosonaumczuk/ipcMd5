@@ -1,4 +1,4 @@
-#include "include/slaveProcess.h"
+#include <slaveProcess.h>
 
 int main() {
     char fifoPaths[MAX_LONG_DIGITS];
