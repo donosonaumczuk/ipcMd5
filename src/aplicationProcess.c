@@ -5,7 +5,7 @@ int main(int argc, char const *argv[]) {
         errorToStderr(INVALID_NUMBER_ARGS_ERROR);
     }
     else {
-        pid_t pid = getpid();
+        pid_t applicationPid = getpid();
         int vistaIsSet = FALSE;
         int fileQuantity = argc - 1;
         int nextFileIndex = 1;
@@ -19,7 +19,7 @@ int main(int argc, char const *argv[]) {
 
             if(pid == 0) {
                 char pidArgument[MAX_PID_DIGITS];
-                intToString(pid, pidArgument);
+                intToString(applicationPid, pidArgument);
                 if(execl(VISTA_PROC_BIN_PATH, VISTA_PROC_BIN_NAME, pidArgument,
                    NULL) == ERROR_STATE) {
                     error(EXEC_ERROR(VISTA_PROC_BIN_PATH));
@@ -50,7 +50,7 @@ int main(int argc, char const *argv[]) {
         fd_set fdSet;
 
         while(remainingFiles > 0) {
-            fdSet = fdSetBackUp;
+            fdSet = fdSetBackup;
             monitorFds(maxFd, &fdSet);
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet)) {
