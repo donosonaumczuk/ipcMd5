@@ -7,7 +7,8 @@
 #include <sys/wait.h>
 
 
-#define SHM_BUFF_NAME "/shmbuffnametest0"
+#define SHM_BUFF_NAME "/shmbuffnametest"
+#define SHM_BUFF_NAME_2 "/shmbuffnametest2"
 #define STRING_TO_WRITE "I am written"
 #define SHM_BUFF_SIZE 15
 #define SIZE_TO_READ 11
@@ -30,9 +31,12 @@ void thenIsWrittenInShmBuffAfterRead(ShmBuffCDT shmBuffPointer);
 void testReadInShmBuffAfterReadAndWrite(void);
 ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite(void);
 void testReadAndWriteDifferentProcess(void);
-ShmBuffCDT givenAShmBuffTwoProces(int pid);
+ShmBuffCDT givenAShmBuffTwoProces(int pid, char *shmName);
 void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid,
                                       char *buffer);
 void thenReadWhatTheOtherWrote(char *buffer, int pid);
+void testReadStringEOF();
+char *whenWriterCloseAndReaderReads(ShmBuffCDT shmBuffPointer, int pid);
+void thenAnswerIsEOF(char *answer);
 
 #endif
