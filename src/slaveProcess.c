@@ -1,15 +1,4 @@
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include "slaveProcess.h"
-#include "include/ipcMd5"
-#include "include/errors.h"
+#include "include/slaveProcess.h"
 
 int main() {
    char fifoPaths[MAX_LONG_DIGITS];

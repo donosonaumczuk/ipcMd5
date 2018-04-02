@@ -1,19 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/select.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
 #include "include/slave.h"
-#include "include/errors.h"
-#include "include/tools.h"
-
-#include <ctype.h>
 
 static void obtainHash(int fd, char *hash);
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filepath);
@@ -80,7 +65,7 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
    char *filePathToHash;
    while(number) {
       filePathToHash = getPath(fdpaths);
-      //if(isValidFile)
+      if(isValidFilePath)
          writeHashOnFd(fdmd5,filePathToHash);
       number --;
       free(filePathToHash);
