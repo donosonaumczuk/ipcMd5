@@ -14,8 +14,7 @@
  * Opens the temporary file used by the tests.
  * Returns zero on success, non-zero otherwise.
  */
-int initSlaveSuite()
-{
+int initSlaveSuite() {
        return 0;
 }
 
@@ -26,10 +25,10 @@ int initSlaveSuite()
  * Closes the temporary file used by the tests.
  * Returns zero on success, non-zero otherwise.
  */
-int cleanSlaveSuite()
-{
+int cleanSlaveSuite() {
        return 0;
 }
+
 
 void testOfReadingTheQuantityOfFilePathsToHash() {
   int fd, actualQuantity = 9, readQuantity;

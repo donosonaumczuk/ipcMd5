@@ -20,7 +20,7 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filepath);
 
 
 char *getPath(int fd) {
-   char separator = ',';
+   char separator = 0;
    char *stringToReturn = NULL;
    int index = 0;
    int finished = FALSE;
@@ -88,10 +88,8 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
 }
 
 int getNumberOfFilePaths(int fd) {
-   char quantity[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1], commaAndSpace[2];
+   char quantity[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1];
    readNumber(fd, quantity, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY);
-   if(read(fd, commaAndSpace, 2) == ERROR_STATE)
-      error("");
    return stringToInt(quantity);
 }
 
@@ -108,6 +106,11 @@ void readNumber(int fd, char *buffer, int count) {
       }
 
    } while(i < count && isdigit(aux) && readquantity);
+   if(readquantity) {
+      readquantity = read(fd, &aux, 1);
+      if(readquantity == ERROR_STATE)
+         error(""); 
+   }
    buffer[i] = 0;
 }
 
