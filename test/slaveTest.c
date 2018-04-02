@@ -1,14 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <CUnit/Basic.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include "include/slaveTest.h"
-#include "./../src/include/slave.h"
 
 /* The suite initialization function.
  * Opens the temporary file used by the tests.
