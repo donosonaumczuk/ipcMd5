@@ -6,3 +6,4 @@ all:
 	$(CC) $(CFLAGS)	slaveProcess.c slave.c tools.c errors.c -o slaveProcess.out
 
 clean:
+	rm *.out
