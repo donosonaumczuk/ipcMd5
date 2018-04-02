@@ -5,5 +5,6 @@
 #include <ctype.h>
 
 int stringToInt(char *string);
+void * allocateMemory(size_t bytes);
 
 #endif

@@ -9,3 +9,13 @@ int stringToInt(char *string) {
          characters diferent from digits.\n");
    return ret;
 }
+
+void * allocateMemory(size_t bytes) {
+    void * address = malloc(bytes);
+
+    if(address == NULL) {
+        errorToStderr(ALLOCATE_MEM_ERROR);
+    }
+
+    return address;
+}
