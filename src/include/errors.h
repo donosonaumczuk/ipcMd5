@@ -21,8 +21,11 @@
 #define MKPIPE_ERROR "Error when trying to make pipe"
 #define CLOSE_ERROR "Error when trying to close a file descriptor through close"
 #define READ_ERROR "Error when trying to read a file descriptor through read"
+#define SELECT_ERROR "Error when trying to monitor file descriptors through "\
+                     "select"
 #define ALLOCATE_MEM_ERROR "Error when trying to allocate memory"
-#define OPEN_SHARE_MEMORY_ERROR "Error when trying to open a share memory object"
+#define OPEN_SHARE_MEMORY_ERROR "Error when trying to open a "\
+                                "share memory object"
 #define TRUNCATE_ERROR "Error when trying to extend share memory"
 #define MAP_ERROR "Error trying to map share memory"
 #define STAT_ERROR "Error trying to read share memory status"
