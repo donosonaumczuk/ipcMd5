@@ -26,28 +26,6 @@ char *getPath(int fd) {
 }
 
 void writeHashOnFd(int fd, char *filePath) {
-<<<<<<< HEAD
-   int status, fileDescriptors[2];
-   pid_t pid;
-   char hash[HASH_MD5_LENGTH + 1];
-   if(pipe(fileDescriptors) == ERROR_STATE)
-      error("Pipe failed.\n");
-   pid = fork();
-   if(pid == 0) {
-      close(1);
-      dup(fileDescriptors[1]);
-      close(fileDescriptors[0]);
-      if(execl("/usr/bin/md5sum","md5sum", filePath,NULL) == ERROR_STATE)
-         error("Couldn't execute md5sum.\n");
-   }
-   else if(pid == ERROR_STATE)
-      error("Fork failed.\n");
-   close(fileDescriptors[1]);
-   waitpid(pid, &status, 0);
-   obtainHash(fileDescriptors[0],hash);
-   writeHashWithExpectedFormat(fd,hash,filePath);
-   close(fileDescriptors[0]);
-=======
     int status, fileDescriptors[2];
     pid_t pid;
     char hash[HASH_MD5_LENGTH + 1];
@@ -71,7 +49,6 @@ void writeHashOnFd(int fd, char *filePath) {
     obtainHash(fileDescriptors[0],hash);
     writeHashWithExpectedFormat(fd,hash,filePath);
     close(fileDescriptors[0]);
->>>>>>> b2b936e94dab499ec517c836d68ed3323d33fad1
 
 }
 
@@ -88,16 +65,6 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
 }
 
 void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
-<<<<<<< HEAD
-   char *filePathToHash;
-   while(number) {
-      filePathToHash = getPath(fdpaths);
-      //if(isValidFile)
-         writeHashOnFd(fdmd5,filePathToHash);
-      number --;
-      free(filePathToHash);
-   }
-=======
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
@@ -107,7 +74,6 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
         number --;
         free(filePathToHash);
     }
->>>>>>> b2b936e94dab499ec517c836d68ed3323d33fad1
 }
 
 int getNumberOfFilePaths(int fd) {
@@ -117,26 +83,6 @@ int getNumberOfFilePaths(int fd) {
 }
 
 void readNumber(int fd, char *buffer, int count) {
-<<<<<<< HEAD
-   int i = 0, readquantity;
-   char aux;
-   do {
-      readquantity = read(fd, &aux, 1);
-      if(readquantity == ERROR_STATE)
-         error("");
-      if(readquantity && isdigit(aux)) {
-         buffer[i] = aux;
-         i++;
-      }
-
-   } while(i < count && isdigit(aux) && readquantity);
-   if(readquantity) {
-      readquantity = read(fd, &aux, 1);
-      if(readquantity == ERROR_STATE)
-         error("");
-   }
-   buffer[i] = 0;
-=======
     int i = 0, readquantity;
     char aux;
     do {
@@ -157,7 +103,6 @@ void readNumber(int fd, char *buffer, int count) {
         }
     }
     buffer[i] = 0;
->>>>>>> b2b936e94dab499ec517c836d68ed3323d33fad1
 }
 
 void waitForAnswer(int fd) {
