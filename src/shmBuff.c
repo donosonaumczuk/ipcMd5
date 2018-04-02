@@ -206,3 +206,33 @@ void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
         error(CLOSE_ERROR);
     }
 }
+
+char *getStringFromBuffer(ShmBuffCDT shmBuffPointer) {
+    int i = 0, flag = TRUE, size = 0;
+    signed char current;
+    char *buffer = NULL;
+
+    do {
+        if(i % BLOCK == 0) {
+            size =+ BLOCK;
+            if((buffer = (char *)realloc(buffer, size)) == NULL) {
+                errorToStderr(ALLOCATE_MEM_ERROR);
+            }
+        }
+
+        readFromShmBuff(shmBuffPointer, &current, ONE_CHAR);
+
+        if (current == EOF) {
+            buffer = (char *)EOF;
+            flag = FALSE;
+        } else {
+            if(current == 0) {
+                flag = FALSE;
+            }
+            buffer[i++] = current;
+        }
+
+    } while (flag);
+
+    return buffer;
+}

@@ -122,7 +122,7 @@ void testReadAndWriteDifferentProcess() {
     int pid = fork();
     char buffer[SIZE_TO_READ];
 
-    shmBuffPointer = givenAShmBuffTwoProces(pid);
+    shmBuffPointer = givenAShmBuffTwoProces(pid, SHM_BUFF_NAME);
 
     whenReadAndWriteDifferentProcess(shmBuffPointer, pid, buffer);
 
@@ -131,12 +131,12 @@ void testReadAndWriteDifferentProcess() {
     unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
-ShmBuffCDT givenAShmBuffTwoProces(int pid) {
+ShmBuffCDT givenAShmBuffTwoProces(int pid, char *shmName) {
     ShmBuffCDT shmBuffPointer;
     if(pid != 0) {
-        shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
+        shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, shmName);
     } else {
-        shmBuffPointer = shmBuffAlreadyInit(SHM_BUFF_NAME);
+        shmBuffPointer = shmBuffAlreadyInit(shmName);
     }
     return shmBuffPointer;
 }
@@ -159,4 +159,33 @@ void thenReadWhatTheOtherWrote(char *buffer, int pid) {
     if(pid == 0) {
         CU_ASSERT(strcmp(buffer, STRING_TO_WRITE)==0);
     }
+}
+
+void testReadStringEOF() {
+    ShmBuffCDT shmBuffPointer;
+    int pid = fork();
+    char *answer;
+
+    shmBuffPointer = givenAShmBuffTwoProces(pid, SHM_BUFF_NAME_2);
+
+    answer = whenWriterCloseAndReaderReads(shmBuffPointer, pid);
+
+    thenAnswerIsEOF(answer);
+
+    unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME_2);
+}
+
+char *whenWriterCloseAndReaderReads(ShmBuffCDT shmBuffPointer, int pid) {
+    if(pid != 0) {
+        closeShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+        int status;
+        waitpid(pid, &status, WNOHANG);
+        exit(0);
+    } else {
+        return getStringFromBuffer(shmBuffPointer);
+    }
+}
+
+void thenAnswerIsEOF(char *answer) {
+    CU_ASSERT(answer == (void *)EOF);
 }
