@@ -4,11 +4,9 @@ struct ShmBuff {
     int first;
     int last;
     int size;
-    long int writerPid;
-    long int readerPid;
-    int isLastOperationWrite;
     sem_t sem;
-    char *buffer;
+    int isLastOperationWrite;
+    signed char *buffer;
 };
 
 int initShmBuffSuite() {
