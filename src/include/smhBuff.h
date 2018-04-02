@@ -11,6 +11,7 @@
 #include <signal.h>
 #include "errors.h"
 #include <errno.h>
+#include <libio.h>
 
 #define PID_DEFAULT 0
 #define START 0
@@ -19,7 +20,6 @@
 #define OFF_SET 0
 #define FALSE 0
 #define TRUE 1
-#define EOF -1
 #define FAIL -1
 #define SUCCEFULL 0
 

@@ -31,7 +31,8 @@ void testReadInShmBuffAfterReadAndWrite(void);
 ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite(void);
 void testReadAndWriteDifferentProcess(void);
 ShmBuffCDT givenAShmBuffTwoProces(int pid);
-void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid, char *buffer);
+void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid,
+                                      char *buffer);
 void thenReadWhatTheOtherWrote(char *buffer, int pid);
 
 #endif
