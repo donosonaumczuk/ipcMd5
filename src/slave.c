@@ -61,7 +61,7 @@ void writeHashOnFd(int fd, char *filePath) {
    obtainHash(fileDescriptors[0],hash);
    writeHashWithExpectedFormat(fd,hash,filePath);
    close(fileDescriptors[0]);
-   
+
 }
 
 static void obtainHash(int fd, char *hash) {
@@ -84,7 +84,7 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
          writeHashOnFd(fdmd5,filePathToHash);
       number --;
       free(filePathToHash);
-   } 
+   }
 }
 
 int getNumberOfFilePaths(int fd) {
@@ -99,7 +99,7 @@ void readNumber(int fd, char *buffer, int count) {
    do {
       readquantity = read(fd, &aux, 1);
       if(readquantity == ERROR_STATE)
-         error(""); 
+         error("");
       if(readquantity && isdigit(aux)) {
          buffer[i] = aux;
          i++;
@@ -109,7 +109,7 @@ void readNumber(int fd, char *buffer, int count) {
    if(readquantity) {
       readquantity = read(fd, &aux, 1);
       if(readquantity == ERROR_STATE)
-         error(""); 
+         error("");
    }
    buffer[i] = 0;
 }

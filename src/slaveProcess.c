@@ -15,14 +15,14 @@ int main() {
    char fifoPaths[MAX_LONG_DIGITS];
    int fdpaths, fdrequest, fdmd5;
    fdrequest = open(AVAILABLE_SLAVES_QUEUE, O_WRONLY);
-   if(fdrequest == ERROR_STATUS) 
+   if(fdrequest == ERROR_STATUS)
       error("Couldn't open fifo named: %s", AVAILABLE_SLAVES_QUEUE);
    createFilePathFifo(fifoPaths, fdrequest);
    fdpaths = open(fifoPaths, O_RDONLY);
    if(fdpaths == ERROR_STATUS)
       error("Couldn't open fifo named: %s", fifoPaths);
    fdmd5 = open(MD5_RESULT_QUEUE, O_WRONLY);
-   if(fdmd5 == ERROR_STATUS) 
+   if(fdmd5 == ERROR_STATUS)
       error("Couldn't open fifo named: %s", MD5_RESULT_QUEUE);
    do {
       waitForAnswer(fifoPaths);
@@ -47,5 +47,3 @@ void createFilePathFifo(char *name, int fdrequest) {
    if(write(fdrequest, name, strlen(name) + 1) == ERROR_STATUS)
       error("");
 }
-
-

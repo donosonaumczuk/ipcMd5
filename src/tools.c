@@ -10,6 +10,10 @@ int stringToInt(char *string) {
    return ret;
 }
 
+void intToString(int integer, char *string) {
+    sprintf(string, "%d", integer);
+}
+
 void * allocateMemory(size_t bytes) {
     void * address = malloc(bytes);
 

@@ -33,6 +33,8 @@
 #define SEMAPHORE_ERROR "Error trying to operate with semaphore"
 #define UNMAP_ERROR "Error trying to unmap share memory"
 #define UNLINK_SHARED_MEMORY_ERROR "Error trying to delete share memory object"
+#define WRITE_FIFO_ERROR(fifoName) "Error when trying to write on " #fifoName ""\
+                              "fifo through write"
 
 
 int error(char * errorMessage);

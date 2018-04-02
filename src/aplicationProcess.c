@@ -5,9 +5,34 @@ int main(int argc, char const *argv[]) {
         errorToStderr(INVALID_NUMBER_ARGS_ERROR);
     }
     else {
+        pid_t pid = getpid();
+        int vistaIsSet = FALSE;
         int fileQuantity = argc - 1;
+        int nextFileIndex = 1;
+
+        if(strcmp(argv[1], VISTA_PROC_FLAG) == EQUALS) {
+            vistaIsSet = TRUE;
+            pid_t pid;
+            if((pid = fork()) == ERROR_STATE) {
+                error(FORK_ERROR);
+            }
+
+            if(pid == 0) {
+                char pidArgument[MAX_PID_DIGITS];
+                intToString(pid, pidArgument);
+                if(execl(VISTA_PROC_BIN_PATH, VISTA_PROC_BIN_NAME, pidArgument,
+                   NULL) == ERROR_STATE) {
+                    error(EXEC_ERROR(VISTA_PROC_BIN_PATH));
+                }
+            }
+
+            nextFileIndex = 2;
+            fileQuantity = argc - 2;
+        }
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
+
+        int fileLoad = getFileLoad(slaveQuantity, fileQuantity);
 
         int fdMd5Queue = makeMd5ResultQueue();
 
@@ -17,7 +42,6 @@ int main(int argc, char const *argv[]) {
                                       fdMd5Queue);
 
         int remainingFiles = fileQuantity;
-        int nextFileIndex = 0;
 
 
         int maxFd;
@@ -30,24 +54,27 @@ int main(int argc, char const *argv[]) {
             monitorFds(maxFd, &fdSet);
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet)) {
-                char *pidString = readSlavePidString(fdAvailableSlavesQueue);
-                for(int i = 0; i < FILE_LOAD && remainingFiles > 0; i++) {
-                    sendNextFile(pidString, argv, nextFileIndex++);
-                    remainingFiles--;
+                char pidString[MAX_PID_DIGITS + 1];
+                while(readSlavePidString(fdAvailableSlavesQueue, pidString) !=
+                      EMPTY) {
+                    for(int i = 0; i < fileLoad && remainingFiles > 0; i++) {
+                        sendNextFile(pidString, argv[nextFileIndex++]);
+                        remainingFiles--;
+                    }
                 }
             }
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
-
+                /* write on file */
+                if(vistaIsSet) {
+                    /* Write
+                        on
+                       ShmBuf */
+                }
             }
         }
 
         /* here there is not remainingFiles, so i need to finish all slaves */
-        int slavesInExecution = slaveQuantity;
-
-        while(slavesInExecution > 0) {
-
-        }
 
         // freeResources();
     }
@@ -55,12 +82,48 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
-char *readSlavePidString(int fdAvailableSlavesQueue) {
+int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
+    if(read(fdAvailableSlavesQueue, pidString, 1) == ERROR_STATE) {
+        if(errno == EAGAIN) {
+            return EMPTY;
+        }
 
+        error(READ_ERROR);
+    }
+
+    int index = 0;
+    while(pidString[index++] != 0) {
+        if(read(fdAvailableSlavesQueue, pidString + index, 1) == ERROR_STATE) {
+            error(READ_ERROR);
+        }
+    }
+
+    return OK_STATE;
 }
 
-void sendNextFile(char *fifoName, char const *filePaths[], int nextFileIndex) {
+void sendNextFile(char *fifoName, char const *filePath) {
+    int fd;
+    if((fd = open(fifoName, O_WRONLY)) == ERROR_STATE) {
+        error(OPEN_FIFO_ERROR(fifoName));
+    }
 
+    if(write(fd, filePath, strlen(filePath)) == ERROR_STATE) {
+        error(WRITE_FIFO_ERROR(filePath));
+    }
+
+    if(close(fd) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
+}
+
+int getFileLoad(int slaveQuantity, int fileQuantity) {
+    int fileLoad = GREATEST_FILE_LOAD;
+
+    if(slaveQuantity == fileQuantity) {
+        fileLoad = SMALLEST_FILE_LOAD;
+    }
+
+    return fileLoad;
 }
 
 int monitorFds(int maxFd, fd_set *fdSetPointer) {

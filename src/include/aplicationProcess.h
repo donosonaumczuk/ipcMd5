@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
 #include "tools.h"
 #include "ipcMd5.h"
 #include "errors.h"
@@ -18,14 +19,19 @@
 #define SLAVE_BIN_PATH "./slave" //CHECK BIN FILE PATH
 #define SLAVE_BIN_NAME "slave"
 #define MAX_CORE_DIGITS 3
-#define FILE_LOAD 2
+#define GREATEST_FILE_LOAD 2
+#define SMALLEST_FILE_LOAD 1
+#define EMPTY -1
+#define EQUALS 0
+#define VISTA_PROC_FLAG "-v"
+#define VISTA_PROC_BIN_PATH "/vistaProcess"
+#define VISTA_PROC_BIN_NAME "vistaProcess"
 
 // int *makeFileToHashQueues(pid_t *slavePids, int slaveQuantity);
 int main(int argc, char const *argv[]);
 int getSlaveQuantity(int fileQuantity);
 pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
                   int fdMd5Queue);
-void * allocateMemory(size_t bytes);
 int makeAvailableSlavesQueue();
 int getNumberOfProcessors();
 int makeMd5ResultQueue();
