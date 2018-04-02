@@ -17,14 +17,15 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
         error(OPEN_SHARE_MEMORY_ERROR);
     }
 
-    if(ftruncate(fd, sizeof(size * sizeof(signed char) + sizeof(struct ShmBuff)))
-       == ERROR_STATE) {
+    if(ftruncate(fd, sizeof(size * sizeof(signed char) +
+       sizeof(struct ShmBuff))) == ERROR_STATE) {
         error(TRUNCATE_ERROR);
     }
 
     ShmBuffCDT shmBuffPointer;
-    if((shmBuffPointer = mmap(NULL, size * sizeof(signed char) + sizeof(struct ShmBuff),
-       PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET)) == ERROR_STATE) {
+    if((shmBuffPointer = mmap(NULL, size * sizeof(signed char) +
+       sizeof(struct ShmBuff), PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET))
+       == (void *)ERROR_STATE) {
            error(MAP_ERROR);
     }
 
@@ -38,7 +39,8 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
     shmBuffPointer->readerPid = PID_DEFAULT;
     sem_init(&shmBuffPointer->sem, IS_SHARE, SEM_INIT_VALUE);
     shmBuffPointer->isLastOperationWrite = FALSE;
-    shmBuffPointer->buffer = (signed char *) (&shmBuffPointer->buffer + sizeof(signed char));
+    shmBuffPointer->buffer = (signed char *)(&shmBuffPointer->buffer +
+                              sizeof(signed char));
 
     return shmBuffPointer;
 }
@@ -56,7 +58,7 @@ ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
 
     ShmBuffCDT shmBuffPointer;
     if((shmBuffPointer = mmap(NULL, stat.st_size, PROT_READ | PROT_WRITE,
-       MAP_SHARED, fd, OFF_SET)) == ERROR_STATE) {
+       MAP_SHARED, fd, OFF_SET)) == (void *)ERROR_STATE) {
         error(MAP_ERROR);
     }
 
@@ -70,7 +72,8 @@ ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
 int canWrite(ShmBuffCDT shmBuffPointer, int size) {
     int isLastGreaterThanFirst = shmBuffPointer->last >= shmBuffPointer->first;
     int distance = shmBuffPointer->last - shmBuffPointer->first;
-    distance = (isLastGreaterThanFirst) ? distance : distance + shmBuffPointer->size;
+    distance = (isLastGreaterThanFirst) ? distance : distance +
+                shmBuffPointer->size;
 
     if(distance == 0 && shmBuffPointer->isLastOperationWrite){
         distance = shmBuffPointer->size;
@@ -85,7 +88,8 @@ int canWrite(ShmBuffCDT shmBuffPointer, int size) {
 void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
     int isLastGreaterThanFirst = shmBuffPointer->last >= shmBuffPointer->first;
     int distance = shmBuffPointer->last - shmBuffPointer->first;
-    distance = (isLastGreaterThanFirst) ? distance : distance + shmBuffPointer->size;
+    distance = (isLastGreaterThanFirst) ? distance :
+                distance + shmBuffPointer->size;
 
     if(distance == 0 && shmBuffPointer->isLastOperationWrite){
         distance = shmBuffPointer->size;
@@ -201,4 +205,34 @@ void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
     if(close(fd) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
+}
+
+char *getStringFromBuffer(ShmBuffCDT shmBuffPointer) {
+    int i = 0, flag = TRUE, size = 0;
+    signed char current;
+    char *buffer = NULL;
+
+    do {
+        if(i % BLOCK == 0) {
+            size =+ BLOCK;
+            if((buffer = (char *)realloc(buffer, size)) == NULL) {
+                errorToStderr(ALLOCATE_MEM_ERROR);
+            }
+        }
+
+        readFromShmBuff(shmBuffPointer, &current, ONE_CHAR);
+
+        if (current == EOF) {
+            buffer = (char *)EOF;
+            flag = FALSE;
+        } else {
+            if(current == 0) {
+                flag = FALSE;
+            }
+            buffer[i++] = current;
+        }
+
+    } while (flag);
+
+    return buffer;
 }
