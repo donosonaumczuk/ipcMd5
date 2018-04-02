@@ -4,6 +4,7 @@ struct ShmBuff {
     int first;
     int last;
     int size;
+    int long readerPid;
     sem_t sem;
     int isLastOperationWrite;
     signed char *buffer;

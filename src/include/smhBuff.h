@@ -28,7 +28,7 @@ typedef struct ShmBuff *ShmBuffCDT;
 ShmBuffCDT shmBuffInit(int size, char *shmName);
 ShmBuffCDT shmBuffAlreadyInit(char *shmName);
 int writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size);
-int readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size);
+void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size);
 void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
 void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
 void closeShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
