@@ -6,7 +6,7 @@ int main() {
     if(sem_unlink(semaphorePathsName) == ERROR_STATE) {
         error(SEMAPHORE_UNLINK_ERROR(semaphorePathsName));
     }
-    sem_t *pathsSem = sem_open(semaphorePathsName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    sem_t *pathsSem = sem_open(semaphorePathsName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, 1);
     if(pathsSem == SEM_FAILED) {
         error(OPEN_SEMAPHORE_ERROR(semaphorePathsName));
     }
