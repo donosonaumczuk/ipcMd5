@@ -7,11 +7,11 @@ int main(int argc, char const *argv[]) {
       int flag = TRUE;
       char *toPrint, aux;
       char *name, hash;
-      ShmBuffCDT shareMemory = shmBuffAlreadyInit(argv[0]);
+      ShmBuffCDT sharedMemory = shmBuffAlreadyInit(argv[0]);
       while(flag) {
-          if((name = getStringFromBuffer(shareMemory)) == EOF) {
+          if((name = getStringFromBuffer(sharedMemory)) == EOF) {
               flag = FALSE;
-          } else if ((hash = getStringFromBuffer(shareMemory)) == EOF)) {
+          } else if ((hash = getStringFromBuffer(sharedMemory)) == EOF)) {
               free(name);
               flag = FALSE;
               errorToStderr(MISSING_HASH_ERROR);
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]) {
               free(hash);
           }
       }
-      unmapShareMemory(shmBuffPointer, argv[0]);
+      unmapSharedMemory(shmBuffPointer, argv[0]);
   }
     return 0;
 }

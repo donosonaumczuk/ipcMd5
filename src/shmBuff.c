@@ -14,7 +14,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
     int fd;
     if((fd = shm_open(shmName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR))
        == ERROR_STATE) {
-        error(OPEN_SHARE_MEMORY_ERROR);
+        error(OPEN_SHARED_MEMORY_ERROR);
     }
 
     if(ftruncate(fd, sizeof(size * sizeof(signed char) +
@@ -37,7 +37,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
     shmBuffPointer->last = START;
     shmBuffPointer->size = size;
     shmBuffPointer->readerPid = PID_DEFAULT;
-    sem_init(&shmBuffPointer->sem, IS_SHARE, SEM_INIT_VALUE);
+    sem_init(&shmBuffPointer->sem, IS_SHARED, SEM_INIT_VALUE);
     shmBuffPointer->isLastOperationWrite = FALSE;
     shmBuffPointer->buffer = (signed char *)(&shmBuffPointer->buffer +
                               sizeof(signed char));
@@ -49,7 +49,7 @@ ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
     struct stat stat;
     int fd;
     if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
-        error(OPEN_SHARE_MEMORY_ERROR);
+        error(OPEN_SHARED_MEMORY_ERROR);
     }
 
     if(fstat(fd, &stat) == ERROR_STATE) {
@@ -175,24 +175,24 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size) {
     }
 }
 
-void closeShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+void closeSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
     signed char eof = EOF;
     writeInShmBuff(shmBuffPointer, &eof, 1);
-    freeAndUnmapShareMemory(shmBuffPointer, shmName);
+    freeAndUnmapSharedMemory(shmBuffPointer, shmName);
 }
 
-void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
-    unmapShareMemory(shmBuffPointer, shmName);
+void freeAndUnmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+    unmapSharedMemory(shmBuffPointer, shmName);
     if(shm_unlink(shmName) == ERROR_STATE) {
         error(UNLINK_SHARED_MEMORY_ERROR);
     }
 }
 
-void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+void unmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
     struct stat stat;
     int fd;
     if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
-        error(OPEN_SHARE_MEMORY_ERROR);
+        error(OPEN_SHARED_MEMORY_ERROR);
     }
 
     if(fstat(fd, &stat) == ERROR_STATE) {

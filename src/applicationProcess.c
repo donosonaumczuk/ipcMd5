@@ -20,7 +20,7 @@ int main(int argc, char const *argv[]) {
             if(pid == 0) {
                 char pidArgument[MAX_PID_DIGITS];
                 intToString(applicationPid, pidArgument);
-                if(execl(VIEW_PROC_BIN_PATH, view_PROC_BIN_NAME, pidArgument,
+                if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, pidArgument,
                    NULL) == ERROR_STATE) {
                     error(EXEC_ERROR(VIEW_PROC_BIN_PATH));
                 }
@@ -29,6 +29,8 @@ int main(int argc, char const *argv[]) {
             nextFileIndex = 2;
             fileQuantity = argc - 2;
         }
+
+        ShmBuffCDT shmBuff
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
