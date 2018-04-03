@@ -15,7 +15,8 @@
 #include "tools.h"
 #include <semaphore.h>
 
-
+#define MD5SUM "/usr/bin/md5sum" 
+#define MD5_SEMAPHORE "/md5Semaphore"
 #define BLOCK	10
 #define TRUE	 1
 #define FALSE	 0
