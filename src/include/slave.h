@@ -18,8 +18,6 @@
 #include <tools.h>
 
 #define MD5SUM "/usr/bin/md5sum"
-#define MD5_SEMAPHORE "/md5Semaphore"
-#define HASH_MD5_LENGTH 32
 #define MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY 1
 
 char *getPath(int fd);

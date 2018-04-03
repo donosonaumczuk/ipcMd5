@@ -85,7 +85,7 @@ void whenASlaveWritesAHashOnAFifo(char *fifoName, char *filePathToHash) {
 }
 
 void thenHashIsWrittenOnAFifo(char *fifoName) {
-    int length = HASH_MD5_LENGTH + 2 + FILE_PATH_TO_HASH_LENGTH;
+    int length = MD5_DIGITS + 2 + FILE_PATH_TO_HASH_LENGTH;
     char hash[length + 1];
     int fifoFd = open(fifoName, O_RDWR);
     if(read(fifoFd,hash, length) == ERROR_STATE) {

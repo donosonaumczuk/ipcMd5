@@ -33,6 +33,7 @@
 #define FAIL -1
 #define ONE_CHAR 1
 #define BLOCK 10
+#define SHM_SEMAPHORE "SharedMemoery Semaphore"
 
 typedef struct ShmBuff *ShmBuff_t;
 

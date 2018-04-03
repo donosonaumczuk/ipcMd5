@@ -1,10 +1,10 @@
-#include "include/slaveProcess.h"
+#include <slaveProcess.h>
 
 int main() {
 
-    sem_t *requestSem = sem_open(REQUEST_SEMAPHORE, O_WRONLY);
+    sem_t *requestSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_WRONLY);
     if(requestSem == SEM_FAILED) {
-        error(OPEN_SEMAPHORE_ERROR(REQUEST_SEMAPHORE));
+        error(OPEN_SEMAPHORE_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
     sem_t *md5Sem = sem_open(MD5_SEMAPHORE, O_WRONLY);
     if(md5Sem == SEM_FAILED) {

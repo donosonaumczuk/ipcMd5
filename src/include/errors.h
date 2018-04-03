@@ -30,7 +30,6 @@
 #define MAP_ERROR "Error trying to map share memory"
 #define STAT_ERROR "Error trying to read share memory status"
 #define KILL_ERROR "Error trying to send a message to a process"
-#define SEMAPHORE_ERROR "Error trying to operate with semaphore"
 #define UNMAP_ERROR "Error trying to unmap share memory"
 #define UNLINK_SHARED_MEMORY_ERROR "Error trying to delete share memory object"
 #define MISSING_HASH_ERROR "Error missing hash from a file"

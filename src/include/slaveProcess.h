@@ -8,8 +8,6 @@
 #include <ipcMd5.h>
 #include <applicationProcess.h>
 
-#define REQUEST_SEMAPHORE "/requestSemaphore"
-
 void createFilePathFifo(char *name, int fdrequest, sem_t *requestSem);
 
 #endif

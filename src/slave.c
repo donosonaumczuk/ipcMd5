@@ -1,4 +1,4 @@
-#include "include/slave.h"
+#include <slave.h>
 
 static void obtainHash(int fd, char *hash);
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filepath);
@@ -10,7 +10,7 @@ char *getPath(int fd) {
 void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     int status, fileDescriptors[2];
     pid_t pid;
-    char hash[HASH_MD5_LENGTH + 1];
+    char hash[MD5_DIGITS + 1];
     if(pipe(fileDescriptors) == ERROR_STATE) {
         error(MKPIPE_ERROR);
     }
@@ -51,10 +51,10 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
 }
 
 static void obtainHash(int fd, char *hash) {
-    if(read(fd, hash, HASH_MD5_LENGTH) == ERROR_STATE) {
+    if(read(fd, hash, MD5_DIGITS) == ERROR_STATE) {
         error(READ_ERROR);
     }
-    hash[HASH_MD5_LENGTH] = 0;
+    hash[MD5_DIGITS] = 0;
 }
 
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
@@ -64,7 +64,7 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
     if(write(fd, ": ", strlen(": ")) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
-    if(write(fd, hash, HASH_MD5_LENGTH + 1) == ERROR_STATE) {
+    if(write(fd, hash, MD5_DIGITS + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 

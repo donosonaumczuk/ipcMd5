@@ -30,7 +30,7 @@ int main(int argc, char const *argv[]) {
             fileQuantity = argc - 2;
         }
 
-        FILE *resultFile = fopen("hashMd5LastResult.txt","w");
+        FILE *resultFile = fopen(MD5_RESULT_FILE, WRITE_PERMISSION);
 
         ShmBuff_t sharedMemory;
         char shmName[MAX_PID_DIGITS];
@@ -48,7 +48,9 @@ int main(int argc, char const *argv[]) {
 
         int fdAvailableSlavesQueue = makeAvailableSlavesQueue(slaveQuantity);
 
-        /* init semaphores here */
+        sem_t *availableSlavesSem;
+        sem_t *md5QueueSem;
+        openSemaphores(&availableSlavesSem, &md5QueueSem);
 
         makeSlaves(slaveQuantity, fdAvailableSlavesQueue, fdMd5Queue);
 
@@ -91,7 +93,8 @@ int main(int argc, char const *argv[]) {
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
                 if(canReadMd5Queue) {
-                    md5ResultBuffer = getStringFromFd(fdMd5Queue, 0);
+                    md5ResultBuffer = getMd5QueueResult(fdMd5Queue,
+                                                        md5QueueSem);
                 }
 
                 if(viewIsSet) {
@@ -145,6 +148,7 @@ int main(int argc, char const *argv[]) {
         }
 
         fclose(resultFile);
+        /* unlink sempahores */
         close(fdMd5Queue);
         close(fdAvailableSlavesQueue);
         if(viewIsSet) {
@@ -155,6 +159,36 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
+char *getMd5QueueResult(int fdMd5Queue, sem_t *md5QueueSemaphore) {
+    if(sem_wait(md5QueueSemaphore) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
+    }
+
+    char *md5Result = getStringFromFd(fdMd5Queue, 0);
+
+    if(sem_post(md5QueueSemaphore) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
+    }
+
+    return md5Result;
+}
+
+void openSemaphores(sem_t **availableSlavesSem, sem_t **md5QueueSem) {
+    *availableSlavesSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_CREAT | O_RDWR,
+                                   S_IRUSR | S_IWUSR, ONE_RESOURCE);
+    if(*availableSlavesSem == SEM_FAILED) {
+        error(OPEN_SEMAPHORE_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+    }
+
+    *md5RQueueSem = sem_open(MD5_SEMAPHORE, O_CREAT | O_RDWR,
+                               S_IRUSR | S_IWUSR, ONE_RESOURCE);
+
+    if(*md5QueueSem == SEM_FAILED) {
+        error(OPEN_SEMAPHORE_ERROR(MD5_SEMAPHORE);
+    }
+}
+
+
 fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue) {
     fd_set fdSet;
 
@@ -164,7 +198,12 @@ fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue) {
     return fdSet;
 }
 
-int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
+int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
+                       sem_t *availableSlavesSem) {
+    if(sem_wait(availableSlavesSem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+    }
+
     if(read(fdAvailableSlavesQueue, pidString, 1) == ERROR_STATE) {
         if(errno == EAGAIN) {
             return EMPTY;
@@ -180,18 +219,26 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
         }
     }
 
+    if(sem_post(availableSlavesSem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+    }
+
     return OK_STATE;
 }
 
-void sendToSlaveFileQueue(char *fifoName, char const *filePath) {
+void sendToSlaveFileQueue(char *pidString, char const *filePath) {
     int fd;
-    if((fd = open(fifoName, O_WRONLY)) == ERROR_STATE) {
-        error(OPEN_FIFO_ERROR(fifoName));
+    if((fd = open(pidString, O_WRONLY)) == ERROR_STATE) {
+        error(OPEN_FIFO_ERROR(pidString));
     }
+
+    /* open semaphore and wait */
 
     if(write(fd, filePath, strlen(filePath) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(filePath));
     }
+
+    /* post and close semaphore */
 
     if(close(fd) == ERROR_STATE) {
         error(CLOSE_ERROR);
