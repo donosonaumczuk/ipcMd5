@@ -1,6 +1,6 @@
-#ifndef VIEW_H
+#ifndef VIEW_PROCESS_H
 
-#define VIEW_H
+#define VIEW_PROCESS_H
 
 #include <fcntl.h>
 #include <smhBuff.h>
