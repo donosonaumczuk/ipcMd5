@@ -10,7 +10,8 @@
 
 int stringToInt(char *string);
 void * allocateMemory(size_t bytes);
+void * reAllocateMemory(void *currentAddress, size_t bytes);
 int isValidFilePath(char *filePath);
-void intToString(int integer, char *string); 
+void intToString(int integer, char *string);
 
 #endif

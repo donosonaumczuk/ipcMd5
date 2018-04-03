@@ -36,9 +36,8 @@ int main(int argc, char const *argv[]) {
         if(viewIsSet) {
             char shmName[MAX_PID_DIGITS];
             intToString(applicationPid, shmName);
-            sharedMemory = shmBuffInit(fileQuantity * (PATH_MAX + 1 /*:*/ +
-                                       MD5_DIGITS + 1), shmName); //CHECK LATERRRRRR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        }
+            sharedMemory = shmBuffInit((fileQuantity / 4) * (PATH_MAX +
+                                       MD5_DIGITS + FORMAT_DIGITS), shmName);
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
@@ -46,7 +45,7 @@ int main(int argc, char const *argv[]) {
 
         int fdMd5Queue = makeMd5ResultQueue();
 
-        int fdAvailableSlavesQueue = makeAvailableSlavesQueue();
+        int fdAvailableSlavesQueue = makeAvailableSlavesQueue(slaveQuantity);
 
         /* init semaphores !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
@@ -61,8 +60,8 @@ int main(int argc, char const *argv[]) {
                                       fdMd5Queue, &maxFd);
         fd_set fdSet;
 
-        int canOverwrite = TRUE;
-        char md5ResultQueueBuffer[]
+        int canReadMd5Queue = TRUE;
+        char *md5ResultBuffer;
 
         while(remainingFiles > 0) {
             fdSet = fdSetBackup;
@@ -77,28 +76,30 @@ int main(int argc, char const *argv[]) {
                         filesToSentQuantity = remainingFiles;
                     }
 
-                    char
-                    sendNextFile()
+                    char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
+                    intToString(filesToSentQuantity, filesToSentQuantityString);
+                    sendToSlaveFileQueue(pidString, filesToSentQuantityString);
 
                     for(int i = 0; i < filesToSentQuantity; i++) {
-                        sendNextFile(pidString, argv[nextFileIndex++]);
+                        sendToSlaveFileQueue(pidString, argv[nextFileIndex++]);
                         remainingFiles--;
                     }
                 }
             }
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
-                if(canOverwrite) {
-                    // readMd5ResultQueue(fdMd5Queue);
-                    // write(file);
+                if(canReadMd5Queue) {
+                    md5ResultBuffer = getStringFromFd(fdMd5Queue);
+                    fprintf(resultFile, "%s\n", md5ResultBuffer);
                 }
 
                 if(viewIsSet) {
-                    // if (writeInShmBuff(sharedMemory, md5Buffer, size) != OK_STATE) {
-                        canOverwrite = FALSE;
+                    if (writeInShmBuff(sharedMemory, md5ResultBuffer,
+                         strlen(md5ResultBuffer) + 1) != OK_STATE) {
+                        canReadMd5Queue = FALSE;
                     }
                     else {
-                        canOverwrite = TRUE;
+                        canReadMd5Queue = TRUE;
                     }
                 }
             }
@@ -116,8 +117,32 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
-void readMd5ResultQueue(int fdMd5Queue, char *buffer) {
+char *getStringFromFd(int fd) {
+    int i = 0, flag = TRUE, size = 0;
+    signed char current;
+    char *buffer = NULL;
 
+    do {
+        if(i % BLOCK == 0) {
+            size =+ BLOCK;
+            buffer = (char *) reAllocateMemory(buffer, size));
+        }
+
+        read(fd, &current, 1);
+
+        if (current == EOF) {
+            buffer = (char *)EOF;
+            flag = FALSE;
+        } else {
+            if(current == 0) {
+                flag = FALSE;
+            }
+            buffer[i++] = current;
+        }
+
+    } while(flag);
+
+    return buffer;
 }
 
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
@@ -139,7 +164,7 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
     return OK_STATE;
 }
 
-void sendNextFile(char *fifoName, char const *filePath) {
+void sendToSlaveFileQueue(char *fifoName, char const *filePath) {
     int fd;
     if((fd = open(fifoName, O_WRONLY)) == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(fifoName));
@@ -251,10 +276,11 @@ int getNumberOfProcessors() {
     return numberOfProcessors;
 }
 
-int makeAvailableSlavesQueue() {
+int makeAvailableSlavesQueue(int slaveQuantity) {
     if(mkfifo(AVAILABLE_SLAVES_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
         error(MKFIFO_ERROR);
     }
+
 
     int fd;
     if((fd = open(AVAILABLE_SLAVES_QUEUE,
@@ -262,26 +288,13 @@ int makeAvailableSlavesQueue() {
         error(OPEN_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
 
+    if(fcntl(fd, F_SETPIPE_SZ, (MAX_PID_DIGITS + FORMAT_DIGITS) *
+             slaveQuantity) == ERROR_STATE) {
+           error(CHANGE_PIPE_SIZE_ERROR);
+       }
+
     return fd;
 }
-
-/* D E P R E C A T E D
-
-int *makeFileToHashQueues(pid_t *slavePids, int slaveQuantity) {
-    int *fileToHashQueues = (int *) allocateMemory(slaveQuantity * sizeof(int));
-    char pidString[MAX_LONG_DIGITS] = {0};
-    for(int i = 0; i < slaveQuantity; i++) {
-        sprintf(pidString, "%d", slavePids[i]);
-        if(mkfifo(pidString, S_IRUSR | S_IWUSR) == ERROR_STATE) {
-            error(MKFIFO_ERROR);declaration
-        }
-        if((fileToHashQueues[i] = open(pidString, O_RDONLY)) == ERROR_STATE) {
-            error(OPEN_FIFO_ERROR(fileToHashQueues[i]));
-        }
-    }
-
-    return fileToHashQueues;
-} */
 
 pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
                   int fdMd5Queue) {
@@ -321,6 +334,11 @@ int makeMd5ResultQueue() {
     if((fd = open(MD5_RESULT_QUEUE, O_NONBLOCK | O_RDONLY)) == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
+
+    if(fcntl(fd, F_SETPIPE_SZ, 4 * (PATH_MAX + MD5_DIGITS + FORMAT_DIGITS)) ==
+       ERROR_STATE) {
+           error(CHANGE_PIPE_SIZE_ERROR);
+       }
 
     return fd;
 }

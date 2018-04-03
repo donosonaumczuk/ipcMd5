@@ -215,9 +215,7 @@ char *getStringFromBuffer(ShmBuff_t shmBuffPointer) {
     do {
         if(i % BLOCK == 0) {
             size =+ BLOCK;
-            if((buffer = (char *)realloc(buffer, size)) == NULL) {
-                errorToStderr(ALLOCATE_MEM_ERROR);
-            }
+            buffer = (char *) reAllocateMemory(buffer, size));
         }
 
         readFromShmBuff(shmBuffPointer, &current, ONE_CHAR);

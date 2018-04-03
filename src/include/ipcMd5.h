@@ -13,5 +13,6 @@
 #define GREATEST_FILE_LOAD 2
 #define SMALLEST_FILE_LOAD 1
 #define GREATEST_LOAD_DIGITS 1
+#define FORMAT_DIGITS 3
 
 #endif

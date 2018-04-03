@@ -13,7 +13,7 @@ char *getPath(int fd) {
 
     do{
         if((index % BLOCK) == 0) {
-            stringToReturn = realloc(stringToReturn, (index + BLOCK) * sizeof(char));
+            stringToReturn = (char *) reAllocateMemory(stringToReturn, (index + BLOCK) * sizeof(char));
         }
         readReturn = read(fd, (void *) (stringToReturn + (index * sizeof(char))), 1);
         if((readReturn <= 0) || (stringToReturn[index] == EOF) || (stringToReturn[index] == separator)) {

@@ -25,6 +25,16 @@ void * allocateMemory(size_t bytes) {
     return address;
 }
 
+void * reAllocateMemory(void *currentAddress, size_t bytes) {
+    void * address = reAllocateMemory(currentAddress, bytes);
+
+    if(address == NULL) {
+        errorToStderr(ALLOCATE_MEM_ERROR);
+    }
+
+    return address;
+}
+
 int isValidFilePath(char *filePath) {
     struct stat pathStat;
     stat(filePath, &pathStat);

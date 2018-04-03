@@ -18,7 +18,7 @@
 #define FALSE 0
 #define NPROC_BIN_PATH "/usr/bin/nproc"
 #define NPROC_BIN_NAME "nproc"
-#define SLAVE_BIN_PATH "./slaveProcess" //CHECK BIN FILE PATH
+#define SLAVE_BIN_PATH "./slaveProcess"
 #define SLAVE_BIN_NAME "slaveProcess"
 #define MAX_CORE_DIGITS 3
 #define EMPTY -1
@@ -27,16 +27,15 @@
 #define VIEW_PROC_BIN_PATH "/viewProcess"
 #define VIEW_PROC_BIN_NAME "viewProcess"
 
-// int *makeFileToHashQueues(pid_t *slavePids, int slaveQuantity);
 int main(int argc, char const *argv[]);
 int getSlaveQuantity(int fileQuantity);
 pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
                   int fdMd5Queue);
-int makeAvailableSlavesQueue();
+int makeAvailableSlavesQueue(int slaveQuantity);
 int getNumberOfProcessors();
 int makeMd5ResultQueue();
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString);
-void sendNextFile(char *fifoName, char const *filePath);
+void sendToSlaveFileQueue(char *fifoName, char const *filePath);
 int getFileLoad(int slaveQuantity, int fileQuantity);
 int monitorFds(int maxFd, fd_set *fdSetPointer);
 fd_set getFdSet(int fdAvailableSlavesQueue, int fdMd5Queue, int * maxFd);
