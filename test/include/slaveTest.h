@@ -2,7 +2,8 @@
 #define SLAVE_TEST_H
 
 #include <CUnit/Basic.h>
-#include "./../../src/include/slave.h"
+#include <slave.h>
+#include <errors.h>
 
 
 #define FILE_PATH_TO_READ "./test/PathName/ToRead.txt"

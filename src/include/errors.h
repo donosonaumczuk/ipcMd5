@@ -39,6 +39,10 @@
 #define OPEN_SEMAPHORE_ERROR(semaphoreName) "Error trying to open semaphore " #semaphoreName 
 #define SEMAPHORE_WAIT_ERROR(semaphoreName) "Error trying sem_wait on semaphore " #semaphoreName
 #define SEMAPHORE_POST_ERROR(semaphoreName) "Error trying sem_post on semaphore " #semaphoreName
+#define OPEN_FILE_ERROR(fileName) "Error when trying to open " #fileName
+#define WRITE_FILE_ERROR(fileName) "Error when trying to write on " #fileName ""\
+                              "file through write"
+                              
 int error(char * errorMessage);
 int errorToStderr(char * errorMessage);
 
