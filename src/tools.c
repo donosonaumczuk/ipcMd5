@@ -61,6 +61,6 @@ char *getStringFromFd(int fd, char separator) {
         }
         index++;
     } while(!finished);
-    printf("index: %d\n", index);
+    
     return stringToReturn;
 }

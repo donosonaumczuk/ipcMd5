@@ -41,7 +41,8 @@ void makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
 int makeAvailableSlavesQueue(int slaveQuantity);
 int getNumberOfProcessors();
 int makeMd5ResultQueue();
-int readSlavePidString(int fdAvailableSlavesQueue, char *pidString);
+int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
+                       sem_t *availableSlavesSem);
 void sendToSlaveFileQueue(char *pidString, char const *filePath);
 int getFileLoad(int slaveQuantity, int fileQuantity);
 int monitorFds(int maxFd, fd_set *fdSetPointer);

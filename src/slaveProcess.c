@@ -4,11 +4,13 @@ int main() {
     char semaphorePathsName[MAX_LONG_DIGITS + 2];
     sprintf(semaphorePathsName, "/%d", getpid());
     if(sem_unlink(semaphorePathsName) == ERROR_STATE) {
-        error(SEMAPHORE_UNLINK_ERROR(semaphorePathsName));
+        if(errno != ENOENT) {
+            error(SEMAPHORE_UNLINK_ERROR(semaphorePathsName));
+        }
     }
     sem_t *pathsSem = sem_open(semaphorePathsName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, 1);
     if(pathsSem == SEM_FAILED) {
-        error(OPEN_SEMAPHORE_ERROR(semaphorePathsName));
+        error(SEMAPHORE_OPEN_ERROR(semaphorePathsName));
     }
     sem_t *requestSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_WRONLY);
     if(requestSem == SEM_FAILED) {
@@ -66,7 +68,9 @@ int main() {
         error(CLOSE_ERROR);
     }
     if(sem_unlink(semaphorePathsName) == ERROR_STATE) {
-        error(SEMAPHORE_UNLINK_ERROR);
+        if(errno != ENOENT) {
+            error(SEMAPHORE_UNLINK_ERROR(semaphorePathsName));
+        }
     }
     if(sem_close(requestSem) == ERROR_STATE) {
         error(CLOSE_ERROR);

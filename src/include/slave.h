@@ -16,6 +16,7 @@
 #include <semaphore.h>
 #include <errors.h>
 #include <tools.h>
+#include <ipcMd5.h>
 
 #define MD5SUM "/usr/bin/md5sum"
 #define MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY 1

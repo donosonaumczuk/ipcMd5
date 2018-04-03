@@ -75,8 +75,8 @@ int main(int argc, char const *argv[]) {
             monitorFds(maxFd + 1, &fdSet);
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
-                while(readSlavePidString(fdAvailableSlavesQueue, pidString) !=
-                      EMPTY) {
+                while(readSlavePidString(fdAvailableSlavesQueue, pidString,
+                                         availableSlavesSem) != EMPTY) {
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
@@ -127,7 +127,8 @@ int main(int argc, char const *argv[]) {
             fdSet = fdSetBackup;
             monitorFds(maxFd + 1, &fdSet);
 
-            readSlavePidString(fdAvailableSlavesQueue, pidString);
+            readSlavePidString(fdAvailableSlavesQueue, pidString,
+                               availableSlavesSem);
             intToString(0, filesToSentQuantityString);
             sendToSlaveFileQueue(pidString, filesToSentQuantityString);
             finishRequestedSlaves++;
@@ -179,11 +180,15 @@ void finishSemaphores(sem_t *availableSlavesSem, sem_t *md5QueueSem) {
 
 void unlinkSemaphores() {
     if(sem_unlink(AVAILABLE_SLAVES_SEMAPHORE) == ERROR_STATE) {
-        error(SEMAPHORE_UNLINK_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+        if(errno != ENOENT) {
+            error(SEMAPHORE_UNLINK_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+        }
     }
 
     if(sem_unlink(MD5_SEMAPHORE) == ERROR_STATE) {
-        error(SEMAPHORE_UNLINK_ERROR(MD5_SEMAPHORE));
+        if(errno != ENOENT) {
+            error(SEMAPHORE_UNLINK_ERROR(MD5_SEMAPHORE));
+        }
     }
 }
 
@@ -210,11 +215,11 @@ void openSemaphores(sem_t **availableSlavesSem, sem_t **md5QueueSem) {
         error(SEMAPHORE_OPEN_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
 
-    *md5RQueueSem = sem_open(MD5_SEMAPHORE, O_CREAT | O_RDWR,
+    *md5QueueSem = sem_open(MD5_SEMAPHORE, O_CREAT | O_RDWR,
                                S_IRUSR | S_IWUSR, ONE_RESOURCE);
 
     if(*md5QueueSem == SEM_FAILED) {
-        error(SEMAPHORE_OPEN_ERROR(MD5_SEMAPHORE);
+        error(SEMAPHORE_OPEN_ERROR(MD5_SEMAPHORE));
     }
 }
 
@@ -262,15 +267,14 @@ void sendToSlaveFileQueue(char *pidString, char const *filePath) {
         error(OPEN_FIFO_ERROR(pidString));
     }
 
-    int semNameSize = strlen(pidString) + 2;
-    char semName[semNameSize] = {0};
+    char semName[MAX_PID_DIGITS + 2] = {0};
 
     strcat(semName, "/");
     strcat(semName, pidString);
 
     sem_t *slaveFileQueueSem = sem_open(semName, O_WRONLY);
     if(slaveFileQueueSem == SEM_FAILED) {
-        error(SEMAPHORE_OPEN_ERROR(semName);
+        error(SEMAPHORE_OPEN_ERROR(semName));
     }
 
     if(sem_wait(slaveFileQueueSem) == ERROR_STATE) {
