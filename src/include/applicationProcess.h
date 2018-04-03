@@ -27,7 +27,7 @@
 #define EMPTY -1
 #define EQUALS 0
 #define VIEW_PROC_FLAG "-v"
-#define VIEW_PROC_BIN_PATH "/viewProcess"
+#define VIEW_PROC_BIN_PATH "./viewProcess"
 #define VIEW_PROC_BIN_NAME "viewProcess"
 #define MD5_RESULT_FILE "hashMd5LastResult.txt"
 #define WRITE_PERMISSION "w"

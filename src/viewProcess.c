@@ -1,7 +1,7 @@
 #include <viewProcess.h>
 
 int main(int argc, char const *argv[]) {
-    if(argc != 1) {
+    if(argc != 2) {
       errorToStderr(INVALID_NUMBER_ARGS_ERROR);
   } else {
       int flag = TRUE;
