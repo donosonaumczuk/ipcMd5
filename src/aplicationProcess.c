@@ -6,12 +6,12 @@ int main(int argc, char const *argv[]) {
     }
     else {
         pid_t applicationPid = getpid();
-        int vistaIsSet = FALSE;
+        int viewIsSet = FALSE;
         int fileQuantity = argc - 1;
         int nextFileIndex = 1;
 
-        if(strcmp(argv[1], VISTA_PROC_FLAG) == EQUALS) {
-            vistaIsSet = TRUE;
+        if(strcmp(argv[1], VIEW_PROC_FLAG) == EQUALS) {
+            viewIsSet = TRUE;
             pid_t pid;
             if((pid = fork()) == ERROR_STATE) {
                 error(FORK_ERROR);
@@ -20,9 +20,9 @@ int main(int argc, char const *argv[]) {
             if(pid == 0) {
                 char pidArgument[MAX_PID_DIGITS];
                 intToString(applicationPid, pidArgument);
-                if(execl(VISTA_PROC_BIN_PATH, VISTA_PROC_BIN_NAME, pidArgument,
+                if(execl(VIEW_PROC_BIN_PATH, view_PROC_BIN_NAME, pidArgument,
                    NULL) == ERROR_STATE) {
-                    error(EXEC_ERROR(VISTA_PROC_BIN_PATH));
+                    error(EXEC_ERROR(view_PROC_BIN_PATH));
                 }
             }
 
@@ -37,6 +37,8 @@ int main(int argc, char const *argv[]) {
         int fdMd5Queue = makeMd5ResultQueue();
 
         int fdAvailableSlavesQueue = makeAvailableSlavesQueue();
+
+        /* init semaphores */
 
         pid_t *slavePids = makeSlaves(slaveQuantity, fdAvailableSlavesQueue,
                                       fdMd5Queue);
@@ -65,8 +67,9 @@ int main(int argc, char const *argv[]) {
             }
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
+                readMd5Result(fdMd5Queue);
                 /* write on file */
-                if(vistaIsSet) {
+                if(viewIsSet) {
                     /* Write
                         on
                        ShmBuf */
@@ -214,13 +217,13 @@ int getNumberOfProcessors() {
 }
 
 int makeAvailableSlavesQueue() {
-    if(mkfifo(AVAILABLE_SLAVES_QUEUE,
-              O_NONBLOCK | S_IRUSR | S_IWUSR) == ERROR_STATE) {
+    if(mkfifo(AVAILABLE_SLAVES_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
         error(MKFIFO_ERROR);
     }
 
     int fd;
-    if((fd = open(AVAILABLE_SLAVES_QUEUE, O_RDONLY)) == ERROR_STATE) {
+    if((fd = open(AVAILABLE_SLAVES_QUEUE,
+                  O_NONBLOCK | O_RDONLY)) == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
 
@@ -275,13 +278,12 @@ pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
 }
 
 int makeMd5ResultQueue() {
-    if(mkfifo(MD5_RESULT_QUEUE,
-              O_NONBLOCK | S_IRUSR | S_IWUSR) == ERROR_STATE) {
+    if(mkfifo(MD5_RESULT_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
         error(MKFIFO_ERROR);
     }
 
     int fd;
-    if((fd = open(MD5_RESULT_QUEUE, O_RDONLY)) == ERROR_STATE) {
+    if((fd = open(MD5_RESULT_QUEUE, O_NONBLOCK | O_RDONLY)) == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
