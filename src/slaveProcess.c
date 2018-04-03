@@ -4,11 +4,11 @@ int main() {
 
     sem_t *requestSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_WRONLY);
     if(requestSem == SEM_FAILED) {
-        error(OPEN_SEMAPHORE_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+        error(SEMAPHORE_OPEN_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
     sem_t *md5Sem = sem_open(MD5_SEMAPHORE, O_WRONLY);
     if(md5Sem == SEM_FAILED) {
-        error(OPEN_SEMAPHORE_ERROR(MD5_SEMAPHORE));
+        error(SEMAPHORE_OPEN_ERROR(MD5_SEMAPHORE));
     }
 
     char fifoPaths[MAX_LONG_DIGITS];

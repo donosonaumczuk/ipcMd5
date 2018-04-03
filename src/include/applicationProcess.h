@@ -32,6 +32,7 @@
 #define MD5_RESULT_FILE "hashMd5LastResult.txt"
 #define WRITE_PERMISSION "w"
 
+void unlinkSemaphores();
 char *getMd5QueueResult(int fdMd5Queue, sem_t *md5QueueSemaphore);
 void openSemaphores(sem_t **availableSlavesSem, sem_t **md5QueueSem);
 int getSlaveQuantity(int fileQuantity);

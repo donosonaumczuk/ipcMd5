@@ -148,15 +148,43 @@ int main(int argc, char const *argv[]) {
         }
 
         fclose(resultFile);
-        /* unlink sempahores */
-        close(fdMd5Queue);
-        close(fdAvailableSlavesQueue);
+
+        if(close(fdMd5Queue) == ERROR_STATE) {
+            error(CLOSE_ERROR);
+        }
+
+        if(close(fdAvailableSlavesQueue) == ERROR_STATE) {
+            error(CLOSE_ERROR);
+        }
+
         if(viewIsSet) {
             closeSharedMemory(sharedMemory, shmName);
         }
     }
 
     return 0;
+}
+
+void finishSemaphores(sem_t *availableSlavesSem, sem_t *md5QueueSem) {
+    if(sem_close(availableSlavesSem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+    }
+
+    if(sem_close(md5QueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(MD5_SEMAPHORE));
+    }
+
+    unlinkSemaphores();
+}
+
+void unlinkSemaphores() {
+    if(sem_unlink(AVAILABLE_SLAVES_SEMAPHORE) == ERROR_STATE) {
+        error(SEMAPHORE_UNLINK_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+    }
+
+    if(sem_unlink(MD5_SEMAPHORE) == ERROR_STATE) {
+        error(SEMAPHORE_UNLINK_ERROR(MD5_SEMAPHORE));
+    }
 }
 
 char *getMd5QueueResult(int fdMd5Queue, sem_t *md5QueueSemaphore) {
@@ -174,17 +202,19 @@ char *getMd5QueueResult(int fdMd5Queue, sem_t *md5QueueSemaphore) {
 }
 
 void openSemaphores(sem_t **availableSlavesSem, sem_t **md5QueueSem) {
+    unlinkSemaphores();
+
     *availableSlavesSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_CREAT | O_RDWR,
                                    S_IRUSR | S_IWUSR, ONE_RESOURCE);
     if(*availableSlavesSem == SEM_FAILED) {
-        error(OPEN_SEMAPHORE_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+        error(SEMAPHORE_OPEN_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
 
     *md5RQueueSem = sem_open(MD5_SEMAPHORE, O_CREAT | O_RDWR,
                                S_IRUSR | S_IWUSR, ONE_RESOURCE);
 
     if(*md5QueueSem == SEM_FAILED) {
-        error(OPEN_SEMAPHORE_ERROR(MD5_SEMAPHORE);
+        error(SEMAPHORE_OPEN_ERROR(MD5_SEMAPHORE);
     }
 }
 
@@ -232,13 +262,32 @@ void sendToSlaveFileQueue(char *pidString, char const *filePath) {
         error(OPEN_FIFO_ERROR(pidString));
     }
 
-    /* open semaphore and wait */
+    int semNameSize = strlen(pidString) + 2;
+    char semName[semNameSize] = {0};
+
+    strcat(semName, "/");
+    strcat(semName, pidString);
+
+    sem_t *slaveFileQueueSem = sem_open(semName, O_WRONLY);
+    if(slaveFileQueueSem == SEM_FAILED) {
+        error(SEMAPHORE_OPEN_ERROR(semName);
+    }
+
+    if(sem_wait(slaveFileQueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(semName));
+    }
 
     if(write(fd, filePath, strlen(filePath) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(filePath));
     }
 
-    /* post and close semaphore */
+    if(sem_post(slaveFileQueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(semName));
+    }
+
+    if(sem_close(slaveFileQueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(semName));
+    }
 
     if(close(fd) == ERROR_STATE) {
         error(CLOSE_ERROR);
