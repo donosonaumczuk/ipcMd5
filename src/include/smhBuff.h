@@ -1,6 +1,6 @@
-#ifndef SHMBUFF_H
+#ifndef SHM_BUFF_H
 
-#define SHMBUFF_H
+#define SHM_BUFF_H
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,9 +31,9 @@ ShmBuffCDT shmBuffInit(int size, char *shmName);
 ShmBuffCDT shmBuffAlreadyInit(char *shmName);
 int writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size);
 void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size);
-void freeAndUnmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
-void unmapShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
-void closeShareMemory(ShmBuffCDT shmBuffPointer, char *shmName);
+void freeAndUnmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName);
+void unmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName);
+void closeSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName);
 char *getStringFromBuffer(ShmBuffCDT shmBuffPointer);
 
 #endif
