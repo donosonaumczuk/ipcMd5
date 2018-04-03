@@ -2,7 +2,6 @@
 
 int main() {
     
-
     sem_t *requestSem = sem_open(REQUEST_SEMAPHORE, O_WRONLY);
     if(requestSem == SEM_FAILED) {
         error(OPEN_SEMAPHORE_ERROR(REQUEST_SEMAPHORE));
@@ -11,7 +10,7 @@ int main() {
     if(md5Sem == SEM_FAILED) {
         error(OPEN_SEMAPHORE_ERROR(MD5_SEMAPHORE));
     }
-    
+
     char fifoPaths[MAX_LONG_DIGITS];
     int fdPaths, fdRequest, fdMd5, number;
     fdRequest = open(AVAILABLE_SLAVES_QUEUE, O_WRONLY);
@@ -22,11 +21,17 @@ int main() {
     if(fdMd5 == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
+
     createFilePathFifo(fifoPaths, fdRequest, requestSem);
     fdPaths = open(fifoPaths, O_RDONLY);
     if(fdPaths == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(fifoPaths));
     }
+    
+    if(fcntl(fdPaths, F_SETPIPE_SZ, GREATEST_FILE_LOAD * (PATH_MAX + 1)) < 0) {
+        error("set pipe size failed.");
+    }
+
     do {
         waitForAnswer(fdPaths);
         number = getNumberOfFilePaths(fdPaths);
