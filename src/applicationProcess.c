@@ -9,15 +9,19 @@ int main(int argc, char const *argv[]) {
         int viewIsSet = FALSE;
         int fileQuantity = argc - 1;
         int nextFileIndex = 1;
+        pid_t viewPid;
 
         if(strcmp(argv[1], VIEW_PROC_FLAG) == EQUALS) {
             viewIsSet = TRUE;
-            pid_t pid;
-            if((pid = fork()) == ERROR_STATE) {
+
+            if((viewPid = fork()) == ERROR_STATE) {
                 error(FORK_ERROR);
             }
 
-            if(pid == 0) {
+            if(viewPid == 0) {
+                if(kill(getpid(), SIGSTOP) == ERROR_STATE) {
+                    error(KILL_ERROR);
+                }
                 char pidArgument[MAX_PID_DIGITS];
                 intToString(applicationPid, pidArgument);
                 if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, pidArgument,
@@ -37,7 +41,10 @@ int main(int argc, char const *argv[]) {
         if(viewIsSet) {
             intToString(applicationPid, shmName);
             sharedMemory = shmBuffInit((fileQuantity / 4) * (PATH_MAX +
-                                       MD5_DIGITS + FORMAT_DIGITS), shmName);
+                                        MD5_DIGITS + FORMAT_DIGITS), shmName);
+            if(kill(viewPid, SIGCONT) == ERROR_STATE) {
+                error(KILL_ERROR);
+            }
         }
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);

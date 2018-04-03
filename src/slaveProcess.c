@@ -27,6 +27,7 @@ int main() {
     if(fdRequest == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
+    
     fdMd5 = open(MD5_RESULT_QUEUE, O_WRONLY);
     if(fdMd5 == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(MD5_RESULT_QUEUE));
