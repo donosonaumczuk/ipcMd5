@@ -43,8 +43,8 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
         if(close(fileDescriptors[0]) == ERROR_STATE) {
             error(CLOSE_ERROR);
         }
-        if(execl("/usr/bin/md5sum","md5sum", filePath,NULL) == ERROR_STATE) {
-            error(EXEC_ERROR("/usr/bin/md5dum"));
+        if(execl(MD5SUM,"md5sum", filePath,NULL) == ERROR_STATE) {
+            error(EXEC_ERROR(MD5SUM));
         }
     }
     else if(pid == ERROR_STATE) {
@@ -56,11 +56,11 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     waitpid(pid, &status, 0);
     obtainHash(fileDescriptors[0],hash);
     if(sem_wait(md5Sem) == ERROR_STATE) {
-        error(SEMAPHORE_WAIT_ERROR);
+        error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
     }
     writeHashWithExpectedFormat(fd,hash,filePath);
     if(sem_post(md5Sem) == ERROR_STATE) {
-        error(SEMAPHORE_POST_ERROR);
+        error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
     }
     if(close(fileDescriptors[0]) == ERROR_STATE) {
         error(CLOSE_ERROR);
@@ -77,13 +77,13 @@ static void obtainHash(int fd, char *hash) {
 
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
     if(write(fd, filePath, strlen(filePath)) == ERROR_STATE) {
-        error(WRITE_FIFO_ERROR);
+        error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
     if(write(fd, ": ", strlen(": ")) == ERROR_STATE) {
-        error(WRITE_FIFO_ERROR);
+        error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
     if(write(fd, hash, HASH_MD5_LENGTH + 1) == ERROR_STATE) {
-        error(WRITE_FIFO_ERROR);
+        error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
 }
