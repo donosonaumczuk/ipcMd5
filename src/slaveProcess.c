@@ -65,7 +65,15 @@ int main() {
     if(sem_close(pathsSem) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
-
+    if(sem_unlink(semaphorePathsName) == ERROR_STATE) {
+        error(SEMAPHORE_UNLINK_ERROR);
+    }
+    if(sem_close(requestSem) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
+    if(sem_close(md5Sem) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
     if(close(fdPaths) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
