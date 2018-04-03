@@ -29,7 +29,7 @@ int main() {
     }
     
     if(fcntl(fdPaths, F_SETPIPE_SZ, GREATEST_FILE_LOAD * (PATH_MAX + 1)) < 0) {
-        error("set pipe size failed.");
+        error(CHANGE_PIPE_SIZE_ERROR);
     }
 
     do {

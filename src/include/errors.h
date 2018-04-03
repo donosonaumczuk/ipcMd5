@@ -42,7 +42,7 @@
 #define OPEN_FILE_ERROR(fileName) "Error when trying to open " #fileName
 #define WRITE_FILE_ERROR(fileName) "Error when trying to write on " #fileName ""\
                               "file through write"
-                              
+#define CHANGE_PIPE_SIZE_ERROR "Set pipe size failed."
 int error(char * errorMessage);
 int errorToStderr(char * errorMessage);
 
