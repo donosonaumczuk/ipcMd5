@@ -1,4 +1,4 @@
-#include "include/view.h"
+#include <view.h>
 
 int main(int argc, char const *argv[]) {
     if(argc != 1) {

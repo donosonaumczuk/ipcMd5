@@ -68,7 +68,7 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
-        if(isValidFilePath) {
+        if(isValidFilePath(filePathToHash)) {
             writeHashOnFd(fdmd5,filePathToHash);
         }
         number --;

@@ -3,6 +3,6 @@
 #define VIEW_H
 
 #include <fcntl.h>
-#include "include/smhBuff.h"
+#include <smhBuff.h>
 
 #endif
