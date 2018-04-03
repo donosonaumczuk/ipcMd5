@@ -3,6 +3,7 @@
 #define VIEW_PROCESS_H
 
 #include <fcntl.h>
-#include <smhBuff.h>
+#include <shmBuff.h>
+#include <errors.h>
 
 #endif

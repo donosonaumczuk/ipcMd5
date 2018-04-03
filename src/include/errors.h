@@ -16,7 +16,7 @@
                           "to make a new Slave Process"
 #define FORK_ERROR "Error when trying to fork"
 #define DUP_ERROR "Error when trying to duplicate a file descriptor through dup"
-#define MKFIFO_ERROR "Error when trying to make a fifo"
+#define MKFIFO_ERROR(fifoName) "Error when trying to make a fifo:" #fifoName ""
 #define OPEN_FIFO_ERROR(fifoName) "Error when trying to open " #fifoName " fifo"
 #define MKPIPE_ERROR "Error when trying to make pipe"
 #define CLOSE_ERROR "Error when trying to close a file descriptor through close"
@@ -24,7 +24,7 @@
 #define SELECT_ERROR "Error when trying to monitor file descriptors through "\
                      "select"
 #define ALLOCATE_MEM_ERROR "Error when trying to allocate memory"
-#define OPEN_SHARE_MEMORY_ERROR "Error when trying to open a "\
+#define OPEN_SHARED_MEMORY_ERROR "Error when trying to open a "\
                                 "share memory object"
 #define TRUNCATE_ERROR "Error when trying to extend share memory"
 #define MAP_ERROR "Error trying to map share memory"

@@ -3,26 +3,8 @@
 static void obtainHash(int fd, char *hash);
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filepath);
 
-
 char *getPath(int fd) {
-    char separator = 0;
-    char *stringToReturn = NULL;
-    int index = 0;
-    int finished = FALSE;
-    int readReturn;
-
-    do{
-        if((index % BLOCK) == 0) {
-            stringToReturn = (char *) reAllocateMemory(stringToReturn, (index + BLOCK) * sizeof(char));
-        }
-        readReturn = read(fd, (void *) (stringToReturn + (index * sizeof(char))), 1);
-        if((readReturn <= 0) || (stringToReturn[index] == EOF) || (stringToReturn[index] == separator)) {
-            stringToReturn[index] = 0;
-            finished = TRUE;
-        }
-        index++;
-    } while(!finished);
-    return stringToReturn;
+    return getStringFromFd(fd, 0);
 }
 
 void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {

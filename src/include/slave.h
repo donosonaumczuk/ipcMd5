@@ -1,6 +1,8 @@
 #ifndef SLAVE_H
 #define SLAVE_H
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,15 +13,12 @@
 #include <sys/select.h>
 #include <fcntl.h>
 #include <string.h>
-#include "errors.h"
-#include "tools.h"
 #include <semaphore.h>
+#include <errors.h>
+#include <tools.h>
 
-#define MD5SUM "/usr/bin/md5sum" 
+#define MD5SUM "/usr/bin/md5sum"
 #define MD5_SEMAPHORE "/md5Semaphore"
-#define BLOCK	10
-#define TRUE	 1
-#define FALSE	 0
 #define HASH_MD5_LENGTH 32
 #define MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY 1
 

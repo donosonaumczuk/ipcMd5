@@ -2,6 +2,8 @@
 
 #define APPLICATION_PROCESS_H
 
+#define _GNU_SOURCE
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -13,6 +15,7 @@
 #include <errors.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <shmBuff.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -27,7 +30,6 @@
 #define VIEW_PROC_BIN_PATH "/viewProcess"
 #define VIEW_PROC_BIN_NAME "viewProcess"
 
-int main(int argc, char const *argv[]);
 int getSlaveQuantity(int fileQuantity);
 void makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
                   int fdMd5Queue);
@@ -40,5 +42,7 @@ int getFileLoad(int slaveQuantity, int fileQuantity);
 int monitorFds(int maxFd, fd_set *fdSetPointer);
 fd_set getFdSetAvlbAndMd5Queues(int fdAvailableSlavesQueue,
                                 int fdMd5Queue, int * maxFd);
+fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue);
+
 
 #endif

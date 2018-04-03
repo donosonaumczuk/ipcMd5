@@ -1,4 +1,4 @@
-#include "include/smhBuff.h"
+#include <shmBuff.h>
 
 struct ShmBuff {
     int first;
@@ -45,7 +45,7 @@ ShmBuff_t shmBuffInit(int size, char *shmName) {
     return shmBuffPointer;
 }
 
-ShmBuff_t shmBuffAlreadyInit(char *shmName) {
+ShmBuff_t shmBuffAlreadyInit(char const *shmName) {
     struct stat stat;
     int fd;
     if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
@@ -188,7 +188,7 @@ void freeAndUnmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
     }
 }
 
-void unmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
+void unmapSharedMemory(ShmBuff_t shmBuffPointer, char const *shmName) {
     struct stat stat;
     int fd;
     if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
@@ -215,13 +215,13 @@ char *getStringFromBuffer(ShmBuff_t shmBuffPointer) {
     do {
         if(i % BLOCK == 0) {
             size =+ BLOCK;
-            buffer = (char *) reAllocateMemory(buffer, size));
+            buffer = (char *) reAllocateMemory(buffer, size);
         }
 
         readFromShmBuff(shmBuffPointer, &current, ONE_CHAR);
 
         if (current == EOF) {
-            buffer = (char *)EOF;
+            buffer = (char *) NULL;
             flag = FALSE;
         } else {
             if(current == 0) {

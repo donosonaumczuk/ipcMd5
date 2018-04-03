@@ -70,7 +70,7 @@ void testWriteHashOnAFIFO() {
 
 char *givenAFifo() {
     if(mkfifo("fifoTest", S_IRUSR | S_IWUSR) == ERROR_STATE) {
-        error(MKFIFO_ERROR);
+        error(MKFIFO_ERROR("fifoTest"));
     }
     return "fifoTest";
 }

@@ -1,7 +1,7 @@
 #include "include/slaveProcess.h"
 
 int main() {
-    
+
     sem_t *requestSem = sem_open(REQUEST_SEMAPHORE, O_WRONLY);
     if(requestSem == SEM_FAILED) {
         error(OPEN_SEMAPHORE_ERROR(REQUEST_SEMAPHORE));
@@ -27,7 +27,7 @@ int main() {
     if(fdPaths == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(fifoPaths));
     }
-    
+
     if(fcntl(fdPaths, F_SETPIPE_SZ, GREATEST_FILE_LOAD * (PATH_MAX + 1)) < 0) {
         error(CHANGE_PIPE_SIZE_ERROR);
     }
@@ -64,7 +64,7 @@ int main() {
 void createFilePathFifo(char *name, int fdRequest, sem_t *requestSem) {
     sprintf(name, "%d", getpid());
     if(mkfifo(name, S_IRUSR | S_IWUSR) == ERROR_STATE) {
-        error(MKFIFO_ERROR);
+        error(MKFIFO_ERROR(name));
     }
     if(sem_wait(requestSem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));

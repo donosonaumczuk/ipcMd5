@@ -27,7 +27,7 @@ void testWriteInShmBuff() {
 
     thenIsWrittenInShmBuff(shmBuffPointer);
 
-    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+    freeAndUnmapSharedMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuff_t givenAShmBuff() {
@@ -54,7 +54,7 @@ void testReadFromShmBuff() {
 
     thenDataIsInBuffer(buffer);
 
-    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+    freeAndUnmapSharedMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuff_t givenAShmBuffWithData() {
@@ -82,7 +82,7 @@ void testWriteInShmBuffAfterRead() {
 
     thenIsWrittenInShmBuffAfterRead(shmBuffPointer);
 
-    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+    freeAndUnmapSharedMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuff_t givenAShmBuffWithDataAfterRead() {
@@ -106,7 +106,7 @@ void testReadInShmBuffAfterReadAndWrite() {
 
     thenDataIsInBuffer(buffer);
 
-    freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+    freeAndUnmapSharedMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuff_t givenAShmBuffWithDataAfterReadAndWrite() {
@@ -128,7 +128,7 @@ void testReadAndWriteDifferentProcess() {
 
     thenReadWhatTheOtherWrote(buffer, pid);
 
-    unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+    unmapSharedMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
 ShmBuff_t givenAShmBuffTwoProces(int pid, char *shmName) {
@@ -172,12 +172,12 @@ void testReadStringEOF() {
 
     thenAnswerIsEOF(answer);
 
-    unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME_2);
+    unmapSharedMemory(shmBuffPointer, SHM_BUFF_NAME_2);
 }
 
 char *whenWriterCloseAndReaderReads(ShmBuff_t shmBuffPointer, int pid) {
     if(pid != 0) {
-        closeShareMemory(shmBuffPointer, SHM_BUFF_NAME);
+        closeSharedMemory(shmBuffPointer, SHM_BUFF_NAME);
         int status;
         waitpid(pid, &status, WNOHANG);
         exit(0);
@@ -187,5 +187,5 @@ char *whenWriterCloseAndReaderReads(ShmBuff_t shmBuffPointer, int pid) {
 }
 
 void thenAnswerIsEOF(char *answer) {
-    CU_ASSERT(answer == (void *)EOF);
+    CU_ASSERT(answer == (char *) NULL);
 }

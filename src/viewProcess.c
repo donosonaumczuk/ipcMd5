@@ -5,18 +5,17 @@ int main(int argc, char const *argv[]) {
       errorToStderr(INVALID_NUMBER_ARGS_ERROR);
   } else {
       int flag = TRUE;
-      char *toPrint, aux;
       char *name;
       ShmBuff_t sharedMemory = shmBuffAlreadyInit(argv[0]);
       while(flag) {
-          if((name = getStringFromBuffer(sharedMemory)) == EOF) {
+          if((name = getStringFromBuffer(sharedMemory)) == NULL) {
               flag = FALSE;
           } else {
               printf("%s\n", name);
               free(name);
           }
       }
-      unmapSharedMemory(shmBuffPointer, argv[0]);
+      unmapSharedMemory(sharedMemory, argv[0]);
   }
     return 0;
 }

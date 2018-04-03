@@ -91,12 +91,14 @@ int main(int argc, char const *argv[]) {
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
                 if(canReadMd5Queue) {
-                    md5ResultBuffer = getStringFromFd(fdMd5Queue);
+                    md5ResultBuffer = getStringFromFd(fdMd5Queue, 0);
                 }
 
                 if(viewIsSet) {
-                    if (writeInShmBuff(sharedMemory, md5ResultBuffer,
-                        strlen(md5ResultBuffer) + 1) != OK_STATE) {
+                    if (writeInShmBuff(sharedMemory,
+                                      (signed char *) md5ResultBuffer,
+                                       strlen(md5ResultBuffer) + 1) !=
+                                       OK_STATE) {
                         canReadMd5Queue = FALSE;
                     }
                     else {
@@ -115,8 +117,7 @@ int main(int argc, char const *argv[]) {
         }
 
         maxFd = fdAvailableSlavesQueue;
-        fd_set fdSetBackup = getFdSetAvlbQueue(fdAvailableSlavesQueue);
-        fd_set fdSet;
+        fdSetBackup = getFdSetAvlbQueue(fdAvailableSlavesQueue);
 
         int finishRequestedSlaves = 0;
         while(finishRequestedSlaves < slaveQuantity) {
@@ -152,34 +153,6 @@ int main(int argc, char const *argv[]) {
     }
 
     return 0;
-}
-
-char *getStringFromFd(int fd) {
-    int i = 0, flag = TRUE, size = 0;
-    signed char current;
-    char *buffer = NULL;
-
-    do {
-        if(i % BLOCK == 0) {
-            size =+ BLOCK;
-            buffer = (char *) reAllocateMemory(buffer, size));
-        }
-
-        read(fd, &current, 1);
-
-        if (current == EOF) {
-            buffer = (char *)EOF;
-            flag = FALSE;
-        } else {
-            if(current == 0) {
-                flag = FALSE;
-            }
-            buffer[i++] = current;
-        }
-
-    } while(flag);
-
-    return buffer;
 }
 
 fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue) {
@@ -312,12 +285,14 @@ int getNumberOfProcessors() {
         int status;
         waitpid(pid, &status, 0);
 
-        char buffer[MAX_CORE_DIGITS] = {0};
-        if(read(fd[0], buffer, MAX_CORE_DIGITS) == ERROR_STATE) {
+        char *numberOfProcessorsString;
+
+        if((numberOfProcessorsString = getStringFromFd(fd[0], '\n')) == NULL) {
             error(READ_ERROR);
         }
 
-        numberOfProcessors = stringToInt(buffer);
+        numberOfProcessors = stringToInt(numberOfProcessorsString);
+        free(numberOfProcessorsString);
     }
 
     return numberOfProcessors;
@@ -325,9 +300,8 @@ int getNumberOfProcessors() {
 
 int makeAvailableSlavesQueue(int slaveQuantity) {
     if(mkfifo(AVAILABLE_SLAVES_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
-        error(MKFIFO_ERROR);
+        error(MKFIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
-
 
     int fd;
     if((fd = open(AVAILABLE_SLAVES_QUEUE,
@@ -371,7 +345,7 @@ void makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
 
 int makeMd5ResultQueue() {
     if(mkfifo(MD5_RESULT_QUEUE, S_IRUSR | S_IWUSR) == ERROR_STATE) {
-        error(MKFIFO_ERROR);
+        error(MKFIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
     int fd;
