@@ -13,6 +13,7 @@
 #include <string.h>
 #include "errors.h"
 #include "tools.h"
+#include <semaphores.h"
 
 
 #define BLOCK	10
@@ -22,11 +23,11 @@
 #define MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY 1
 
 char *getPath(int fd);
-void writeHashOnFd(int fd, char *filePath);
+void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem);
 int givenAFileDescriptorWithSomethingWritten();
 void waitForAnswer(int fd);
 void readNumber(int fd, char *buffer, int count);
 int getNumberOfFilePaths(int fd);
-void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5);
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem);
 
 #endif

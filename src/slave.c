@@ -25,7 +25,7 @@ char *getPath(int fd) {
     return stringToReturn;
 }
 
-void writeHashOnFd(int fd, char *filePath) {
+void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     int status, fileDescriptors[2];
     pid_t pid;
     char hash[HASH_MD5_LENGTH + 1];
@@ -47,7 +47,9 @@ void writeHashOnFd(int fd, char *filePath) {
     close(fileDescriptors[1]);
     waitpid(pid, &status, 0);
     obtainHash(fileDescriptors[0],hash);
+    sem_wait(md5Sem);
     writeHashWithExpectedFormat(fd,hash,filePath);
+    sem_post(md5Sem);
     close(fileDescriptors[0]);
 
 }
@@ -64,12 +66,12 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
 
 }
 
-void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
         if(isValidFilePath(filePathToHash)) {
-            writeHashOnFd(fdmd5,filePathToHash);
+            writeHashOnFd(fdmd5,filePathToHash, md5Sem);
         }
         number --;
         free(filePathToHash);

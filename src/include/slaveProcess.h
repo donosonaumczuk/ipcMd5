@@ -4,6 +4,6 @@
 #include <slave.h>
 #include <ipcMd5.h>
 
-void createFilePathFifo(char *name, int fdrequest);
+void createFilePathFifo(char *name, int fdrequest, sem_t *requestSem);
 
 #endif

@@ -30,7 +30,7 @@ int main() {
         waitForAnswer(fdPaths);
         number = getNumberOfFilePaths(fdPaths);
         if(number) {
-            hashFilesOfGivenPaths(number, fdPaths, fdMd5);
+            hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem);
             sem_wait(requestSem);
             if(write(fdRequest, fifoPaths, strlen(fifoPaths)) == ERROR_STATE) {
                 error("");
