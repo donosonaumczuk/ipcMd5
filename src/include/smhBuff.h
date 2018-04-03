@@ -21,19 +21,18 @@
 #define FALSE 0
 #define TRUE 1
 #define FAIL -1
-#define SUCCEFULL 0
 #define ONE_CHAR 1
 #define BLOCK 10
 
-typedef struct ShmBuff *ShmBuffCDT;
+typedef struct ShmBuff *ShmBuff_t;
 
-ShmBuffCDT shmBuffInit(int size, char *shmName);
-ShmBuffCDT shmBuffAlreadyInit(char *shmName);
-int writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size);
-void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size);
-void freeAndUnmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName);
-void unmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName);
-void closeSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName);
-char *getStringFromBuffer(ShmBuffCDT shmBuffPointer);
+ShmBuff_t shmBuffInit(int size, char *shmName);
+ShmBuff_t shmBuffAlreadyInit(char *shmName);
+int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size);
+void readFromShmBuff(ShmBuff_t shmBuffPointer, signed char *buffer, int size);
+void freeAndUnmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName);
+void unmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName);
+void closeSharedMemory(ShmBuff_t shmBuffPointer, char *shmName);
+char *getStringFromBuffer(ShmBuff_t shmBuffPointer);
 
 #endif

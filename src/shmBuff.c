@@ -10,7 +10,7 @@ struct ShmBuff {
     signed char *buffer;
 };
 
-ShmBuffCDT shmBuffInit(int size, char *shmName) {
+ShmBuff_t shmBuffInit(int size, char *shmName) {
     int fd;
     if((fd = shm_open(shmName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR))
        == ERROR_STATE) {
@@ -22,7 +22,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
         error(TRUNCATE_ERROR);
     }
 
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
     if((shmBuffPointer = mmap(NULL, size * sizeof(signed char) +
        sizeof(struct ShmBuff), PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET))
        == (void *)ERROR_STATE) {
@@ -45,7 +45,7 @@ ShmBuffCDT shmBuffInit(int size, char *shmName) {
     return shmBuffPointer;
 }
 
-ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
+ShmBuff_t shmBuffAlreadyInit(char *shmName) {
     struct stat stat;
     int fd;
     if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
@@ -56,7 +56,7 @@ ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
         error(STAT_ERROR);
     }
 
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
     if((shmBuffPointer = mmap(NULL, stat.st_size, PROT_READ | PROT_WRITE,
        MAP_SHARED, fd, OFF_SET)) == (void *)ERROR_STATE) {
         error(MAP_ERROR);
@@ -69,7 +69,7 @@ ShmBuffCDT shmBuffAlreadyInit(char *shmName) {
     return shmBuffPointer;
 }
 
-int canWrite(ShmBuffCDT shmBuffPointer, int size) {
+int canWrite(ShmBuff_t shmBuffPointer, int size) {
     int isLastGreaterThanFirst = shmBuffPointer->last >= shmBuffPointer->first;
     int distance = shmBuffPointer->last - shmBuffPointer->first;
     distance = (isLastGreaterThanFirst) ? distance : distance +
@@ -85,7 +85,7 @@ int canWrite(ShmBuffCDT shmBuffPointer, int size) {
     return TRUE;
 }
 
-void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
+void sleepReader(ShmBuff_t shmBuffPointer, int size) {
     int isLastGreaterThanFirst = shmBuffPointer->last >= shmBuffPointer->first;
     int distance = shmBuffPointer->last - shmBuffPointer->first;
     distance = (isLastGreaterThanFirst) ? distance :
@@ -111,7 +111,7 @@ void sleepReader(ShmBuffCDT shmBuffPointer, int size) {
     }
 }
 
-void wakeupReader(ShmBuffCDT shmBuffPointer) {
+void wakeupReader(ShmBuff_t shmBuffPointer) {
     int isReaderSleep = shmBuffPointer->readerPid;
 
     if(isReaderSleep) {
@@ -122,8 +122,8 @@ void wakeupReader(ShmBuffCDT shmBuffPointer) {
     }
 }
 
-int writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size) {
-    int answer = SUCCEFULL;
+int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
+    int answer = OK_STATE;
 
     if(sem_trywait(&shmBuffPointer->sem) == ERROR_STATE) {
         if(errno == EAGAIN) {
@@ -154,7 +154,7 @@ int writeInShmBuff(ShmBuffCDT shmBuffPointer, signed char *string, int size) {
     return answer;
 }
 
-void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size) {
+void readFromShmBuff(ShmBuff_t shmBuffPointer, signed char *buffer, int size) {
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_ERROR);
     }
@@ -175,20 +175,20 @@ void readFromShmBuff(ShmBuffCDT shmBuffPointer, signed char *buffer, int size) {
     }
 }
 
-void closeSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+void closeSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
     signed char eof = EOF;
     writeInShmBuff(shmBuffPointer, &eof, 1);
     freeAndUnmapSharedMemory(shmBuffPointer, shmName);
 }
 
-void freeAndUnmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+void freeAndUnmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
     unmapSharedMemory(shmBuffPointer, shmName);
     if(shm_unlink(shmName) == ERROR_STATE) {
         error(UNLINK_SHARED_MEMORY_ERROR);
     }
 }
 
-void unmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
+void unmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
     struct stat stat;
     int fd;
     if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
@@ -207,7 +207,7 @@ void unmapSharedMemory(ShmBuffCDT shmBuffPointer, char *shmName) {
     }
 }
 
-char *getStringFromBuffer(ShmBuffCDT shmBuffPointer) {
+char *getStringFromBuffer(ShmBuff_t shmBuffPointer) {
     int i = 0, flag = TRUE, size = 0;
     signed char current;
     char *buffer = NULL;

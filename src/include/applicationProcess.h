@@ -21,8 +21,6 @@
 #define SLAVE_BIN_PATH "./slaveProcess" //CHECK BIN FILE PATH
 #define SLAVE_BIN_NAME "slaveProcess"
 #define MAX_CORE_DIGITS 3
-#define GREATEST_FILE_LOAD 2
-#define SMALLEST_FILE_LOAD 1
 #define EMPTY -1
 #define EQUALS 0
 #define VIEW_PROC_FLAG "-v"

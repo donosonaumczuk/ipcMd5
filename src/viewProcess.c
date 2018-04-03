@@ -7,7 +7,7 @@ int main(int argc, char const *argv[]) {
       int flag = TRUE;
       char *toPrint, aux;
       char *name, hash;
-      ShmBuffCDT sharedMemory = shmBuffAlreadyInit(argv[0]);
+      ShmBuff_t sharedMemory = shmBuffAlreadyInit(argv[0]);
       while(flag) {
           if((name = getStringFromBuffer(sharedMemory)) == EOF) {
               flag = FALSE;

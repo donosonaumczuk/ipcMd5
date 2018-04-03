@@ -30,7 +30,15 @@ int main(int argc, char const *argv[]) {
             fileQuantity = argc - 2;
         }
 
-        ShmBuffCDT shmBuff
+        FILE *resultFile = fopen("hashMd5LastResult.txt","w");
+
+        ShmBuff_t sharedMemory;
+        if(viewIsSet) {
+            char shmName[MAX_PID_DIGITS];
+            intToString(applicationPid, shmName);
+            sharedMemory = shmBuffInit(fileQuantity * (PATH_MAX + 1 /*:*/ +
+                                       MD5_DIGITS + 1), shmName); //CHECK LATERRRRRR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
@@ -40,7 +48,7 @@ int main(int argc, char const *argv[]) {
 
         int fdAvailableSlavesQueue = makeAvailableSlavesQueue();
 
-        /* init semaphores */
+        /* init semaphores !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
         pid_t *slavePids = makeSlaves(slaveQuantity, fdAvailableSlavesQueue,
                                       fdMd5Queue);
@@ -53,6 +61,9 @@ int main(int argc, char const *argv[]) {
                                       fdMd5Queue, &maxFd);
         fd_set fdSet;
 
+        int canOverwrite = TRUE;
+        char md5ResultQueueBuffer[]
+
         while(remainingFiles > 0) {
             fdSet = fdSetBackup;
             monitorFds(maxFd, &fdSet);
@@ -61,7 +72,15 @@ int main(int argc, char const *argv[]) {
                 char pidString[MAX_PID_DIGITS + 1];
                 while(readSlavePidString(fdAvailableSlavesQueue, pidString) !=
                       EMPTY) {
-                    for(int i = 0; i < fileLoad && remainingFiles > 0; i++) {
+                    int filesToSentQuantity = fileLoad;
+                    if(fileLoad > remainingFiles) {
+                        filesToSentQuantity = remainingFiles;
+                    }
+
+                    char
+                    sendNextFile()
+
+                    for(int i = 0; i < filesToSentQuantity; i++) {
                         sendNextFile(pidString, argv[nextFileIndex++]);
                         remainingFiles--;
                     }
@@ -69,22 +88,36 @@ int main(int argc, char const *argv[]) {
             }
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
-                readMd5Result(fdMd5Queue);
-                /* write on file */
+                if(canOverwrite) {
+                    // readMd5ResultQueue(fdMd5Queue);
+                    // write(file);
+                }
+
                 if(viewIsSet) {
-                    /* Write
-                        on
-                       ShmBuf */
+                    // if (writeInShmBuff(sharedMemory, md5Buffer, size) != OK_STATE) {
+                        canOverwrite = FALSE;
+                    }
+                    else {
+                        canOverwrite = TRUE;
+                    }
                 }
             }
         }
 
         /* here there is not remainingFiles, so i need to finish all slaves */
 
-        // freeResources();
+        /* freeResources(
+            close shmBuff
+            free allocatedMemory
+            close fileResults
+            ); */
     }
 
     return 0;
+}
+
+void readMd5ResultQueue(int fdMd5Queue, char *buffer) {
+
 }
 
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
@@ -112,7 +145,7 @@ void sendNextFile(char *fifoName, char const *filePath) {
         error(OPEN_FIFO_ERROR(fifoName));
     }
 
-    if(write(fd, filePath, strlen(filePath)) == ERROR_STATE) {
+    if(write(fd, filePath, strlen(filePath) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(filePath));
     }
 

@@ -19,7 +19,7 @@ int cleanShmBuffSuite() {
 }
 
 void testWriteInShmBuff() {
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
 
     shmBuffPointer = givenAShmBuff();
 
@@ -30,22 +30,22 @@ void testWriteInShmBuff() {
     freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
-ShmBuffCDT givenAShmBuff() {
+ShmBuff_t givenAShmBuff() {
     return shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
 }
 
-void whenWriteInShmBuff(ShmBuffCDT shmBuffPointer) {
+void whenWriteInShmBuff(ShmBuff_t shmBuffPointer) {
     writeInShmBuff(shmBuffPointer, (signed char *)STRING_TO_WRITE,
                    sizeof(STRING_TO_WRITE));
 }
 
-void thenIsWrittenInShmBuff(ShmBuffCDT shmBuffPointer) {
+void thenIsWrittenInShmBuff(ShmBuff_t shmBuffPointer) {
     CU_ASSERT(strcmp((const char *)shmBuffPointer->buffer, STRING_TO_WRITE)
               == 0);
 }
 
 void testReadFromShmBuff() {
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
     char buffer[SHM_BUFF_SIZE];
 
     shmBuffPointer = givenAShmBuffWithData();
@@ -57,14 +57,14 @@ void testReadFromShmBuff() {
     freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
-ShmBuffCDT givenAShmBuffWithData() {
-    ShmBuffCDT shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
+ShmBuff_t givenAShmBuffWithData() {
+    ShmBuff_t shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
     writeInShmBuff(shmBuffPointer, (signed char *)STRING_TO_WRITE,
                    sizeof(STRING_TO_WRITE));
     return shmBuffPointer;
 }
 
-void whenReadFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer) {
+void whenReadFromShmBuff(ShmBuff_t shmBuffPointer, char *buffer) {
     readFromShmBuff(shmBuffPointer, (signed char *)buffer,
                     sizeof(STRING_TO_WRITE));
 }
@@ -74,7 +74,7 @@ void thenDataIsInBuffer(char *buffer) {
 }
 
 void testWriteInShmBuffAfterRead() {
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
 
     shmBuffPointer = givenAShmBuffWithDataAfterRead();
 
@@ -85,20 +85,20 @@ void testWriteInShmBuffAfterRead() {
     freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
-ShmBuffCDT givenAShmBuffWithDataAfterRead() {
-    ShmBuffCDT shmBuffPointer = givenAShmBuffWithData();
+ShmBuff_t givenAShmBuffWithDataAfterRead() {
+    ShmBuff_t shmBuffPointer = givenAShmBuffWithData();
     char buffer[SIZE_TO_READ];
     readFromShmBuff(shmBuffPointer, (signed char *)buffer, SIZE_TO_READ);
     return shmBuffPointer;
 }
 
-void thenIsWrittenInShmBuffAfterRead(ShmBuffCDT shmBuffPointer) {
+void thenIsWrittenInShmBuffAfterRead(ShmBuff_t shmBuffPointer) {
     CU_ASSERT(strcmp((const char *)shmBuffPointer->buffer, STRING_AFTER_READ)
               == 0);
 }
 
 void testReadInShmBuffAfterReadAndWrite() {
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
     char buffer[SHM_BUFF_SIZE];
 
     shmBuffPointer = givenAShmBuffWithDataAfterReadAndWrite();
@@ -109,8 +109,8 @@ void testReadInShmBuffAfterReadAndWrite() {
     freeAndUnmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
-ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite() {
-    ShmBuffCDT shmBuffPointer = givenAShmBuffWithDataAfterRead();
+ShmBuff_t givenAShmBuffWithDataAfterReadAndWrite() {
+    ShmBuff_t shmBuffPointer = givenAShmBuffWithDataAfterRead();
     char buffer[SIZE_TO_READ];
     whenWriteInShmBuff(shmBuffPointer);
     readFromShmBuff(shmBuffPointer, (signed char *)buffer, 2);
@@ -118,7 +118,7 @@ ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite() {
 }
 
 void testReadAndWriteDifferentProcess() {
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
     int pid = fork();
     char buffer[SIZE_TO_READ];
 
@@ -131,8 +131,8 @@ void testReadAndWriteDifferentProcess() {
     unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME);
 }
 
-ShmBuffCDT givenAShmBuffTwoProces(int pid, char *shmName) {
-    ShmBuffCDT shmBuffPointer;
+ShmBuff_t givenAShmBuffTwoProces(int pid, char *shmName) {
+    ShmBuff_t shmBuffPointer;
     if(pid != 0) {
         shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, shmName);
     } else {
@@ -141,7 +141,7 @@ ShmBuffCDT givenAShmBuffTwoProces(int pid, char *shmName) {
     return shmBuffPointer;
 }
 
-void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid,
+void whenReadAndWriteDifferentProcess(ShmBuff_t shmBuffPointer, int pid,
                                       char *buffer) {
     if(pid != 0) {
         writeInShmBuff(shmBuffPointer, (signed char *)STRING_TO_WRITE,
@@ -162,7 +162,7 @@ void thenReadWhatTheOtherWrote(char *buffer, int pid) {
 }
 
 void testReadStringEOF() {
-    ShmBuffCDT shmBuffPointer;
+    ShmBuff_t shmBuffPointer;
     int pid = fork();
     char *answer;
 
@@ -175,7 +175,7 @@ void testReadStringEOF() {
     unmapShareMemory(shmBuffPointer, SHM_BUFF_NAME_2);
 }
 
-char *whenWriterCloseAndReaderReads(ShmBuffCDT shmBuffPointer, int pid) {
+char *whenWriterCloseAndReaderReads(ShmBuff_t shmBuffPointer, int pid) {
     if(pid != 0) {
         closeShareMemory(shmBuffPointer, SHM_BUFF_NAME);
         int status;

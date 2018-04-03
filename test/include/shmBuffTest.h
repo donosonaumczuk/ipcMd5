@@ -18,25 +18,25 @@
 int initShmBuffSuite(void);
 int cleanShmBuffSuite(void);
 void testWriteInShmBuff(void);
-ShmBuffCDT givenAShmBuff(void);
-void whenWriteInShmBuff(ShmBuffCDT shmBuffPointer);
-void thenIsWrittenInShmBuff(ShmBuffCDT shmBuffPointer);
+ShmBuff_t givenAShmBuff(void);
+void whenWriteInShmBuff(ShmBuff_t shmBuffPointer);
+void thenIsWrittenInShmBuff(ShmBuff_t shmBuffPointer);
 void testReadFromShmBuff(void);
-ShmBuffCDT givenAShmBuffWithData(void);
-void whenReadFromShmBuff(ShmBuffCDT shmBuffPointer, char *buffer);
+ShmBuff_t givenAShmBuffWithData(void);
+void whenReadFromShmBuff(ShmBuff_t shmBuffPointer, char *buffer);
 void thenDataIsInBuffer(char *buffer);
 void testWriteInShmBuffAfterRead(void);
-ShmBuffCDT givenAShmBuffWithDataAfterRead(void);
-void thenIsWrittenInShmBuffAfterRead(ShmBuffCDT shmBuffPointer);
+ShmBuff_t givenAShmBuffWithDataAfterRead(void);
+void thenIsWrittenInShmBuffAfterRead(ShmBuff_t shmBuffPointer);
 void testReadInShmBuffAfterReadAndWrite(void);
-ShmBuffCDT givenAShmBuffWithDataAfterReadAndWrite(void);
+ShmBuff_t givenAShmBuffWithDataAfterReadAndWrite(void);
 void testReadAndWriteDifferentProcess(void);
-ShmBuffCDT givenAShmBuffTwoProces(int pid, char *shmName);
-void whenReadAndWriteDifferentProcess(ShmBuffCDT shmBuffPointer, int pid,
+ShmBuff_t givenAShmBuffTwoProces(int pid, char *shmName);
+void whenReadAndWriteDifferentProcess(ShmBuff_t shmBuffPointer, int pid,
                                       char *buffer);
 void thenReadWhatTheOtherWrote(char *buffer, int pid);
 void testReadStringEOF();
-char *whenWriterCloseAndReaderReads(ShmBuffCDT shmBuffPointer, int pid);
+char *whenWriterCloseAndReaderReads(ShmBuff_t shmBuffPointer, int pid);
 void thenAnswerIsEOF(char *answer);
 
 #endif
