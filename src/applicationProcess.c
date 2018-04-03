@@ -33,11 +33,12 @@ int main(int argc, char const *argv[]) {
         FILE *resultFile = fopen("hashMd5LastResult.txt","w");
 
         ShmBuff_t sharedMemory;
+        char shmName[MAX_PID_DIGITS];
         if(viewIsSet) {
-            char shmName[MAX_PID_DIGITS];
             intToString(applicationPid, shmName);
             sharedMemory = shmBuffInit((fileQuantity / 4) * (PATH_MAX +
                                        MD5_DIGITS + FORMAT_DIGITS), shmName);
+        }
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
@@ -47,36 +48,37 @@ int main(int argc, char const *argv[]) {
 
         int fdAvailableSlavesQueue = makeAvailableSlavesQueue(slaveQuantity);
 
-        /* init semaphores !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+        /* init semaphores here */
 
-        pid_t *slavePids = makeSlaves(slaveQuantity, fdAvailableSlavesQueue,
-                                      fdMd5Queue);
+        makeSlaves(slaveQuantity, fdAvailableSlavesQueue, fdMd5Queue);
 
         int remainingFiles = fileQuantity;
 
 
         int maxFd;
-        fd_set fdSetBackup = getFdSet(fdAvailableSlavesQueue,
-                                      fdMd5Queue, &maxFd);
+        fd_set fdSetBackup = getFdSetAvlbAndMd5Queues(fdAvailableSlavesQueue,
+                                                      fdMd5Queue, &maxFd);
         fd_set fdSet;
 
         int canReadMd5Queue = TRUE;
         char *md5ResultBuffer;
 
-        while(remainingFiles > 0) {
-            fdSet = fdSetBackup;
-            monitorFds(maxFd, &fdSet);
+        int resultsWrited = 0;
+        char pidString[MAX_PID_DIGITS + 1];
+        int filesToSentQuantity = fileLoad;
+        char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
 
-            if(FD_ISSET(fdAvailableSlavesQueue, &fdSet)) {
-                char pidString[MAX_PID_DIGITS + 1];
+        while(remainingFiles > 0 || resultsWrited < fileQuantity) {
+            fdSet = fdSetBackup;
+            monitorFds(maxFd + 1, &fdSet);
+
+            if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
                 while(readSlavePidString(fdAvailableSlavesQueue, pidString) !=
                       EMPTY) {
-                    int filesToSentQuantity = fileLoad;
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
 
-                    char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
                     intToString(filesToSentQuantity, filesToSentQuantityString);
                     sendToSlaveFileQueue(pidString, filesToSentQuantityString);
 
@@ -90,28 +92,63 @@ int main(int argc, char const *argv[]) {
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
                 if(canReadMd5Queue) {
                     md5ResultBuffer = getStringFromFd(fdMd5Queue);
-                    fprintf(resultFile, "%s\n", md5ResultBuffer);
                 }
 
                 if(viewIsSet) {
                     if (writeInShmBuff(sharedMemory, md5ResultBuffer,
-                         strlen(md5ResultBuffer) + 1) != OK_STATE) {
+                        strlen(md5ResultBuffer) + 1) != OK_STATE) {
                         canReadMd5Queue = FALSE;
                     }
                     else {
                         canReadMd5Queue = TRUE;
+                        fprintf(resultFile, "%s\n", md5ResultBuffer);
+                        free(md5ResultBuffer);
+                        resultsWrited++;
                     }
+                }
+                else {
+                    fprintf(resultFile, "%s\n", md5ResultBuffer);
+                    free(md5ResultBuffer);
+                    resultsWrited++;
                 }
             }
         }
 
-        /* here there is not remainingFiles, so i need to finish all slaves */
+        maxFd = fdAvailableSlavesQueue;
+        fd_set fdSetBackup = getFdSetAvlbQueue(fdAvailableSlavesQueue);
+        fd_set fdSet;
 
-        /* freeResources(
-            close shmBuff
-            free allocatedMemory
-            close fileResults
-            ); */
+        int finishRequestedSlaves = 0;
+        while(finishRequestedSlaves < slaveQuantity) {
+            fdSet = fdSetBackup;
+            monitorFds(maxFd + 1, &fdSet);
+
+            readSlavePidString(fdAvailableSlavesQueue, pidString);
+            intToString(0, filesToSentQuantityString);
+            sendToSlaveFileQueue(pidString, filesToSentQuantityString);
+            finishRequestedSlaves++;
+        }
+
+
+        int status;
+        int finishedProcesses = 0;
+        int childrenProcesses = slaveQuantity;
+
+        if(viewIsSet) {
+            childrenProcesses++;
+        }
+
+        while(finishedProcesses < childrenProcesses) {
+            wait(&status);
+            finishedProcesses++;
+        }
+
+        fclose(resultFile);
+        close(fdMd5Queue);
+        close(fdAvailableSlavesQueue);
+        if(viewIsSet) {
+            closeSharedMemory(sharedMemory, shmName);
+        }
     }
 
     return 0;
@@ -143,6 +180,15 @@ char *getStringFromFd(int fd) {
     } while(flag);
 
     return buffer;
+}
+
+fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue) {
+    fd_set fdSet;
+
+    FD_ZERO(&fdSet);
+    FD_SET(fdAvailableSlavesQueue, &fdSet);
+
+    return fdSet;
 }
 
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString) {
@@ -198,7 +244,8 @@ int monitorFds(int maxFd, fd_set *fdSetPointer) {
     return r;
 }
 
-fd_set getFdSet(int fdAvailableSlavesQueue, int fdMd5Queue, int * maxFd) {
+fd_set getFdSetAvlbAndMd5Queues(int fdAvailableSlavesQueue,
+                                int fdMd5Queue, int * maxFd) {
     fd_set fdSet;
 
     FD_ZERO(&fdSet);
@@ -296,18 +343,17 @@ int makeAvailableSlavesQueue(int slaveQuantity) {
     return fd;
 }
 
-pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
+void makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
                   int fdMd5Queue) {
-    pid_t *slavePids = (pid_t *) allocateMemory(slaveQuantity * sizeof(pid_t));
-
+    pid_t pid;
     for(int i = 0; i < slaveQuantity; i++) {
-        slavePids[i] = fork();
+        pid = fork();
 
-        if(slavePids[i] == ERROR_STATE) {
+        if(pid == ERROR_STATE) {
             error(FORK_SLAVE_ERROR);
         }
 
-        if(slavePids[i] == 0) {
+        if(pid == 0) {
             if(close(fdAvailableSlavesQueue) == ERROR_STATE) {
                 error(CLOSE_ERROR);
             }
@@ -321,8 +367,6 @@ pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
             }
         }
     }
-
-    return slavePids;
 }
 
 int makeMd5ResultQueue() {

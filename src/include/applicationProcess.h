@@ -29,7 +29,7 @@
 
 int main(int argc, char const *argv[]);
 int getSlaveQuantity(int fileQuantity);
-pid_t *makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
+void makeSlaves(int slaveQuantity, int fdAvailableSlavesQueue,
                   int fdMd5Queue);
 int makeAvailableSlavesQueue(int slaveQuantity);
 int getNumberOfProcessors();
@@ -38,6 +38,7 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString);
 void sendToSlaveFileQueue(char *fifoName, char const *filePath);
 int getFileLoad(int slaveQuantity, int fileQuantity);
 int monitorFds(int maxFd, fd_set *fdSetPointer);
-fd_set getFdSet(int fdAvailableSlavesQueue, int fdMd5Queue, int * maxFd);
+fd_set getFdSetAvlbAndMd5Queues(int fdAvailableSlavesQueue,
+                                int fdMd5Queue, int * maxFd);
 
 #endif
