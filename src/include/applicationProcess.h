@@ -1,6 +1,6 @@
-#ifndef APLICATION_PROCESS_H
+#ifndef APPLICATION_PROCESS_H
 
-#define APLICATION_PROCESS_H
+#define APPLICATION_PROCESS_H
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -18,16 +18,16 @@
 #define FALSE 0
 #define NPROC_BIN_PATH "/usr/bin/nproc"
 #define NPROC_BIN_NAME "nproc"
-#define SLAVE_BIN_PATH "./slave" //CHECK BIN FILE PATH
-#define SLAVE_BIN_NAME "slave"
+#define SLAVE_BIN_PATH "./slaveProcess" //CHECK BIN FILE PATH
+#define SLAVE_BIN_NAME "slaveProcess"
 #define MAX_CORE_DIGITS 3
 #define GREATEST_FILE_LOAD 2
 #define SMALLEST_FILE_LOAD 1
 #define EMPTY -1
 #define EQUALS 0
-#define VISTA_PROC_FLAG "-v"
-#define VISTA_PROC_BIN_PATH "/vistaProcess"
-#define VISTA_PROC_BIN_NAME "vistaProcess"
+#define VIEW_PROC_FLAG "-v"
+#define VIEW_PROC_BIN_PATH "/viewProcess"
+#define VIEW_PROC_BIN_NAME "viewProcess"
 
 // int *makeFileToHashQueues(pid_t *slavePids, int slaveQuantity);
 int main(int argc, char const *argv[]);

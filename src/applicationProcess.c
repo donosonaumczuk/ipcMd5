@@ -1,4 +1,4 @@
-#include <aplicationProcess.h>
+#include <applicationProcess.h>
 
 int main(int argc, char const *argv[]) {
     if(argc < 2) {
@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]) {
                 intToString(applicationPid, pidArgument);
                 if(execl(VIEW_PROC_BIN_PATH, view_PROC_BIN_NAME, pidArgument,
                    NULL) == ERROR_STATE) {
-                    error(EXEC_ERROR(view_PROC_BIN_PATH));
+                    error(EXEC_ERROR(VIEW_PROC_BIN_PATH));
                 }
             }
 

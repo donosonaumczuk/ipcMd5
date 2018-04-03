@@ -1,9 +1,10 @@
 CC	=	gcc
-CFLAGS   = -std=c99 -Wall -pedantic -I ./include
+CFLAGS	=	-std=c99 -Wall -pedantic -I ./include
 
 all:
-	$(CC) $(CFLAGS)	aplicationProcess.c errors.c tools.c -o aplicationProcess.out
-	$(CC) $(CFLAGS)	slaveProcess.c slave.c tools.c errors.c -o slaveProcess.out
+	$(CC) $(CFLAGS)	applicationProcess.c errors.c tools.c -o hashMd5
+	$(CC) $(CFLAGS)	slaveProcess.c slave.c tools.c errors.c -o slaveProcess
+	$(CC) $(CFLAGS) viewProcess.c -o viewProcess
 
 clean:
-	rm *.out
+	rm hashMd5 slaveProcess viewProcess
