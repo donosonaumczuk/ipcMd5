@@ -25,51 +25,75 @@ char *getPath(int fd) {
     return stringToReturn;
 }
 
-void writeHashOnFd(int fd, char *filePath) {
+void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     int status, fileDescriptors[2];
     pid_t pid;
     char hash[HASH_MD5_LENGTH + 1];
     if(pipe(fileDescriptors) == ERROR_STATE) {
-        error("Pipe failed.\n");
+        error(MKPIPE_ERROR);
     }
     pid = fork();
     if(pid == 0) {
-        close(1);
-        dup(fileDescriptors[1]);
-        close(fileDescriptors[0]);
-        if(execl("/usr/bin/md5sum","md5sum", filePath,NULL) == ERROR_STATE) {
-            error("Couldn't execute md5sum.\n");
+        if(close(1) == ERROR_STATE) {
+            error(CLOSE_ERROR);
+        }
+        if(dup(fileDescriptors[1]) == ERROR_STATE) {
+            error(DUP_ERROR);
+        }
+        if(close(fileDescriptors[0]) == ERROR_STATE) {
+            error(CLOSE_ERROR);
+        }
+        if(execl(MD5SUM,"md5sum", filePath,NULL) == ERROR_STATE) {
+            error(EXEC_ERROR(MD5SUM));
         }
     }
     else if(pid == ERROR_STATE) {
-        error("Fork failed.\n");
+        error(FORK_ERROR);
     }
-    close(fileDescriptors[1]);
+    if(close(fileDescriptors[1]) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
     waitpid(pid, &status, 0);
     obtainHash(fileDescriptors[0],hash);
+    if(sem_wait(md5Sem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
+    }
     writeHashWithExpectedFormat(fd,hash,filePath);
-    close(fileDescriptors[0]);
+    if(sem_post(md5Sem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
+    }
+    if(close(fileDescriptors[0]) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
 
 }
 
 static void obtainHash(int fd, char *hash) {
-    read(fd, hash, HASH_MD5_LENGTH);
+    if(read(fd, hash, HASH_MD5_LENGTH) == ERROR_STATE) {
+        error(READ_ERROR);
+    }
     hash[HASH_MD5_LENGTH] = 0;
 }
 
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
-    write(fd, filePath, strlen(filePath));
-    write(fd, ": ", strlen(": "));
-    write(fd, hash, HASH_MD5_LENGTH + 1);
+    if(write(fd, filePath, strlen(filePath)) == ERROR_STATE) {
+        error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
+    }
+    if(write(fd, ": ", strlen(": ")) == ERROR_STATE) {
+        error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
+    }
+    if(write(fd, hash, HASH_MD5_LENGTH + 1) == ERROR_STATE) {
+        error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
+    }
 
 }
 
-void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5) {
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
         if(isValidFilePath(filePathToHash)) {
-            writeHashOnFd(fdmd5,filePathToHash);
+            writeHashOnFd(fdmd5,filePathToHash, md5Sem);
         }
         number --;
         free(filePathToHash);
@@ -88,7 +112,7 @@ void readNumber(int fd, char *buffer, int count) {
     do {
         readquantity = read(fd, &aux, 1);
         if(readquantity == ERROR_STATE) {
-            error("");
+            error(READ_ERROR);
         }
         if(readquantity && isdigit(aux)) {
             buffer[i] = aux;
@@ -99,7 +123,7 @@ void readNumber(int fd, char *buffer, int count) {
     if(readquantity) {
         readquantity = read(fd, &aux, 1);
         if(readquantity == ERROR_STATE) {
-            error("");
+            error(READ_ERROR);
         }
     }
     buffer[i] = 0;
@@ -110,6 +134,6 @@ void waitForAnswer(int fd) {
     FD_ZERO(&readFds);
     FD_SET(fd, &readFds);
     if(select(fd + 1, &readFds, NULL, NULL, NULL) == ERROR_STATE) {
-        error("");
+        error(SELECT_ERROR);
     }
 }

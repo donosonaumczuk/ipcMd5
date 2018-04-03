@@ -1,4 +1,4 @@
-#include <tools.h>
+#include "include/tools.h"
 
 int stringToInt(char *string) {
     int ret = 0,i;

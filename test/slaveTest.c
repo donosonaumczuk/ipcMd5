@@ -34,8 +34,8 @@ void testOfReadingTheQuantityOfFilePathsToHash() {
 
 void givenAFileDescriptorToReadAQuantity(int *fd) {
     int ret = open("testOfReadingTheQuantityOfFilePathsToHash.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    if(ret == -1) {
-        perror("Couldn't open file.\n");
+    if(ret == ERROR_STATE) {
+        error(OPEN_FILE_ERROR("testOfReadingTheQuantityOfFilePathsToHash.txt"));
     }
     *fd = ret;
 }
@@ -43,8 +43,8 @@ void givenAFileDescriptorToReadAQuantity(int *fd) {
 void givenAValidQuantityToReadOnAFile(int fd, int actualQuantity) {
     char buffer[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1];
     sprintf(buffer, "%d", actualQuantity);
-    if(write(fd, buffer, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY) == -1) {
-        perror("Couldn't Write on file.\n");
+    if(write(fd, buffer, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY) == ERROR_STATE) {
+        error(WRITE_FILE_ERROR("testOfReadingTheQuantityOfFilePathsToHash.txt"));
     }
 }
 
@@ -69,9 +69,8 @@ void testWriteHashOnAFIFO() {
 }
 
 char *givenAFifo() {
-    if(mkfifo("fifoTest", S_IRUSR | S_IWUSR) == -1) {
-        fprintf(stderr, "Error making a fifo.\n");
-        exit(1);
+    if(mkfifo("fifoTest", S_IRUSR | S_IWUSR) == ERROR_STATE) {
+        error(MKFIFO_ERROR);
     }
     return "fifoTest";
 }
@@ -89,7 +88,9 @@ void thenHashIsWrittenOnAFifo(char *fifoName) {
     int length = HASH_MD5_LENGTH + 2 + FILE_PATH_TO_HASH_LENGTH;
     char hash[length + 1];
     int fifoFd = open(fifoName, O_RDWR);
-    read(fifoFd,hash, length);
+    if(read(fifoFd,hash, length) == ERROR_STATE) {
+        error(READ_ERROR);
+    }
     hash[length] = 0;
     CU_ASSERT(strcmp(hash, HASH) == 0);
 
@@ -107,7 +108,12 @@ void testReadAFilePath() {
 
 int givenAFileDescriptorWithSomethingWritten() {
     int fd = open("testReadAFilePath.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-    write(fd, FILE_PATH_TO_READ, FILE_PATH_TO_READ_LENGTH);
+    if(fd == ERROR_STATE) {
+        error(OPEN_ERROR("testReadAFilePath.txt"));
+    }
+    if(write(fd, FILE_PATH_TO_READ, FILE_PATH_TO_READ_LENGTH) == ERROR_STATE) {
+        error(WRITE_FILE_ERROR("testReadAFilePath.txt"));
+    }
     lseek(fd, 0, SEEK_SET);
     return fd;
 }
@@ -115,7 +121,9 @@ int givenAFileDescriptorWithSomethingWritten() {
 
 char *whenAFilePathIsReadFromFileDescriptor(int fd){
     char *path = getPath(fd);
-    close(fd);
+    if(close(fd) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
     return path;
 }
 
