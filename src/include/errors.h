@@ -36,7 +36,9 @@
 #define MISSING_HASH_ERROR "Error missing hash from a file"
 #define WRITE_FIFO_ERROR(fifoName) "Error when trying to write on " #fifoName ""\
                               "fifo through write"
-
+#define OPEN_SEMAPHORE_ERROR(semaphoreName) "Error trying to open semaphore " #semaphoreName 
+#define SEMAPHORE_WAIT_ERROR(semaphoreName) "Error trying sem_wait on semaphore " #semaphoreName
+#define SEMAPHORE_POST_ERROR(semaphoreName) "Error trying sem_post on semaphore " #semaphoreName
 int error(char * errorMessage);
 int errorToStderr(char * errorMessage);
 

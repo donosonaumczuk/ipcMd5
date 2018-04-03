@@ -13,7 +13,7 @@
 #include <string.h>
 #include "errors.h"
 #include "tools.h"
-#include <semaphores.h"
+#include <semaphore.h>
 
 
 #define BLOCK	10

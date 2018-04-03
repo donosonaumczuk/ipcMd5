@@ -1,58 +1,73 @@
 #include <slaveProcess.h>
 
 int main() {
-    sem_unlink("/requestSemaphore");
-    sem_t *requestSem = sem_open("/requestSemaphore", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, 1);
-    sem_unlink("/md5Semaphore");
-    sem_t *md5Sem = sem_open("/md5Semaphore", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, 1);
-
+    
 
     sem_t *requestSem = sem_open("/requestSemaphore", O_WRONLY);
+    if(requestSem == SEM_FAILED) {
+        error(OPEN_SEMAPHORE_ERROR("/requestSemaphore"));
+    }
     sem_t *md5Sem = sem_open("/md5Semaphore", O_WRONLY);
-
+    if(md5Sem == SEM_FAILED) {
+        error(OPEN_SEMAPHORE_ERROR(/md5Semaphore));
+    }
     
     char fifoPaths[MAX_LONG_DIGITS];
     int fdPaths, fdRequest, fdMd5, number;
     fdRequest = open(AVAILABLE_SLAVES_QUEUE, O_WRONLY);
     if(fdRequest == ERROR_STATE) {
-        error("");
+        error(OPEN_FIFO_ERROR);
     }
     fdMd5 = open(MD5_RESULT_QUEUE, O_WRONLY);
     if(fdMd5 == ERROR_STATE) {
-        error("");
+        error(OPEN_FIFO_ERROR);
     }
     createFilePathFifo(fifoPaths, fdRequest, requestSem);
     fdPaths = open(fifoPaths, O_RDONLY);
     if(fdPaths == ERROR_STATE) {
-        error("");
+        error(OPEN_FIFO_ERROR);
     }
     do {
         waitForAnswer(fdPaths);
         number = getNumberOfFilePaths(fdPaths);
         if(number) {
             hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem);
-            sem_wait(requestSem);
-            if(write(fdRequest, fifoPaths, strlen(fifoPaths)) == ERROR_STATE) {
-                error("");
+            if(sem_wait(requestSem) == ERROR_STATE) {
+                error(SEMAPHORE_WAIT_ERROR);
             }
-            sem_post(requestSem);
+            if(write(fdRequest, fifoPaths, strlen(fifoPaths)) == ERROR_STATE) {
+                error(WRITE_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
+            }
+            if(sem_post(requestSem) == ERROR_STATE) {
+                error(SEMAPHORE_POST_ERROR);
+            }
         }
     } while(number);
 
-    close(fdPaths);
-    close(fdRequest);
-    close(fdMd5);
+    if(close(fdPaths) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
+    if(close(fdRequest) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
+    if(close(fdMd5) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
     return 0;
 }
 
 void createFilePathFifo(char *name, int fdRequest, sem_t *requestSem) {
     sprintf(name, "%d", getpid());
     if(mkfifo(name, S_IRUSR | S_IWUSR) == ERROR_STATE) {
-        error("");
+        error(MKFIFO_ERROR);
     }
-    sem_wait(requestSem);
+    if(sem_wait(requestSem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR);
+    }
     if(write(fdRequest, name, strlen(name) + 1) == ERROR_STATE) {
-        error("");
+        error(WRITE_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
-    sem_post(requestSem);
+    if(sem_post(requestSem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR);
+    }
 }
