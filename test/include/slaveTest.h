@@ -2,8 +2,8 @@
 #define SLAVE_TEST_H
 
 #include <CUnit/Basic.h>
-#include "./../src/include/slave.h"
-#include "./../src/errors.h"
+#include <slave.h>
+#include <errors.h>
 
 
 #define FILE_PATH_TO_READ "./test/PathName/ToRead.txt"
@@ -28,7 +28,7 @@ void whenASlaveWritesAHashOnAFifo(char *fifoName, char *filePathToHash);
 void thenHashIsWrittenOnAFifo(char *fifoName);
 
 void testOfReadingTheQuantityOfFilePathsToHash();
-void givenAFileDescriptorToReadAQuantity(int *fd);	
+void givenAFileDescriptorToReadAQuantity(int *fd);
 void givenAValidQuantityToReadOnAFile(int fd, int actualQuantity);
 int whenTheNumberIsRead(int fd);
 void thenTheQuantityiesMustBeTheSame(int actualQuantity, int readQuantity);
