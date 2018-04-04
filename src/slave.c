@@ -7,7 +7,7 @@ char *getPath(int fd) {
     return getStringFromFd(fd, 0);
 }
 
-void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
+void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem, sem_t *pathsSem) {
     int status, fileDescriptors[2];
     pid_t pid;
     char hash[MD5_DIGITS + 1];
@@ -73,13 +73,22 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
 
 }
 
-void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem, sem_t *pathsSem) {
     char *filePathToHash;
     while(number) {
+         if(sem_wait(pathsSem) == ERROR_STATE) {
+                error(SEMAPHORE_POST_ERROR(semaphorePathsName));
+            }
         filePathToHash = getPath(fdpaths);
+         if(sem_post(pathsSem) == ERROR_STATE) {
+                error(SEMAPHORE_POST_ERROR(semaphorePathsName));
+            }
         printf("slave: path get: %s\n", filePathToHash); //evans
         if(isValidFilePath(filePathToHash)) {
-            writeHashOnFd(fdmd5,filePathToHash, md5Sem);
+            writeHashOnFd(fdmd5,filePathToHash, md5Sem, pathsSem);
+        }
+        else {
+            errorToStderr("Invalid file.\n");
         }
         number --;
         free(filePathToHash);

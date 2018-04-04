@@ -37,19 +37,20 @@ int main() {
     printf("slave: %d\n", getpid()); //evans
         
     do {
+        printf("slave: entering waitForAnswer");
         waitForAnswer(fdPaths);
         printf("slave: exit waitForAnswer\n"); //evans
         if(sem_wait(pathsSem) == ERROR_STATE) {
             error(SEMAPHORE_WAIT_ERROR(semaphorePathsName));
         }
         number = getNumberOfFilePaths(fdPaths);
-        printf("slave: number readed: %d\n", number);//evans
-        if(number) {
-            hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem);
-            printf("post hashFilesOfGivenPaths %d\n", number); //evans
-            if(sem_post(pathsSem) == ERROR_STATE) {
+         if(sem_post(pathsSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(semaphorePathsName));
             }
+        printf("slave: number readed: %d\n", number);//evans
+        if(number) {
+            hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem, pathsSem);
+            printf("slave: post hashFilesOfGivenPaths %d\n", number); //evans
             printf("before entering availableSlavesSem wait.\n");
             if(sem_wait(availableSlavesSem) == ERROR_STATE) {
                 error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));

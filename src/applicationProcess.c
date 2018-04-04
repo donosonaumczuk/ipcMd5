@@ -290,6 +290,7 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
 
     int index = 0;
     while(pidString[index++] != 0) {
+    
         if((readRet = read(fdAvailableSlavesQueue, pidString + index, 1)) == ERROR_STATE) {
             error(READ_ERROR);
         }
