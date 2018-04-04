@@ -8,3 +8,6 @@ all:
 	$(CC) $(CFLAGS) viewProcess.c shmBuff.c errors.c tools.c -o viewProcess $(SEMFLAGS)
 clean:
 	rm hashMd5 slaveProcess viewProcess hashMd5LastResult.txt availableSlavesQueue md5ResultQueue [0-9]*
+
+reCompile:
+	make clean;	make all;

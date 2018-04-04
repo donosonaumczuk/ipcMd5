@@ -37,26 +37,23 @@ int main() {
     printf("slave: %d\n", getpid()); //evans
 
     do {
-        printf("slave: entering waitForAnswer");//evans
         waitForAnswer(fdPaths);
-        printf("slave: exit waitForAnswer\n"); //evans
+        
         if(sem_wait(pathsSem) == ERROR_STATE) {
             error(SEMAPHORE_WAIT_ERROR(semaphorePathsName));
         }
         number = getNumberOfFilePaths(fdPaths);
-         
-        printf("slave: number readed: %d\n", number);//evans
-        if(number) {
+
+        if(number > 0) {
             hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem, pathsSem);
             if(sem_post(pathsSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(semaphorePathsName));
             }
-            printf("slave: post hashFilesOfGivenPaths %d\n", number); //evans
-            printf("before entering availableSlavesSem wait.\n");
+
             if(sem_wait(availableSlavesSem) == ERROR_STATE) {
                 error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));
             }
-            printf("slave: Writting pid"); //evans
+
             if(write(fdRequest, fifoPaths, strlen(fifoPaths) + 1) == ERROR_STATE) {
                 error(WRITE_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
             }
@@ -64,10 +61,13 @@ int main() {
                 error(SEMAPHORE_POST_ERROR(REQUEST_SEMAPHORE));
             }
         }
+        else if(number == -1) {
+            if(sem_post(pathsSem) == ERROR_STATE) {
+                error(SEMAPHORE_POST_ERROR(semaphorePathsName));
+            }
+        }
     } while(number);
-    // if(sem_post(pathsSem) == ERROR_STATE) {
-    //     error(SEMAPHORE_POST_ERROR(semaphorePathsName));
-    // }
+
     if(sem_close(pathsSem) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
@@ -91,7 +91,7 @@ int main() {
     if(close(fdMd5) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
-    printf("slave: ends\n");
+    printf("slave: %d ends\n", getpid());
     return 0;
 }
 

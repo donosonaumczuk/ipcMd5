@@ -80,6 +80,9 @@ int canWrite(ShmBuff_t shmBuffPointer, int size) {
     }
 
     if (distance + size > shmBuffPointer->size) {
+        printf("el size es %d\n", shmBuffPointer->size);
+        printf("la distancia es %d\n", distance);
+        printf("el length %d\n", size);
         return FALSE;
     }
     return TRUE;
@@ -127,13 +130,14 @@ int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
 
     if(sem_trywait(&shmBuffPointer->sem) == ERROR_STATE) {
         if(errno == EAGAIN) {
+            printf("fallo por semaforo\n"); //evans
             answer = FAIL;
         } else {
             error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
         }
     }
 
-    if(canWrite(shmBuffPointer, size)) {
+    if((answer == OK_STATE) && canWrite(shmBuffPointer, size)) {
         for (int i = 0; i < size; i++) {
             if(shmBuffPointer->last >= shmBuffPointer->size) {
                 shmBuffPointer->last = START;
@@ -142,15 +146,22 @@ int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
             shmBuffPointer->last++;
         }
         shmBuffPointer->isLastOperationWrite = TRUE;
-
-        wakeupReader(shmBuffPointer);
     } else {
+        printf("no fallo por semaforo\n"); //evans
         answer = FAIL;
     }
+
+    printf("lo que esta en el buffer%s\n", shmBuffPointer->buffer);
 
     if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
     }
+
+    if(answer == OK_STATE) {
+        printf("funco\n");
+        wakeupReader(shmBuffPointer);
+    }
+
     return answer;
 }
 

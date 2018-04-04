@@ -25,7 +25,6 @@
 #define SLAVE_BIN_NAME "slaveProcess"
 #define MAX_CORE_DIGITS 3
 #define EMPTY -1
-#define EQUALS 0
 #define VIEW_PROC_FLAG "-v"
 #define VIEW_PROC_BIN_PATH "./viewProcess"
 #define VIEW_PROC_BIN_NAME "viewProcess"
@@ -43,12 +42,13 @@ int getNumberOfProcessors();
 int makeMd5ResultQueue();
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
                        sem_t *availableSlavesSem);
-void sendToSlaveFileQueue(char *pidString, char const *filePath);
+void writeToFd(char const *string, int fd);
 int getFileLoad(int slaveQuantity, int fileQuantity);
 int monitorFds(int maxFd, fd_set *fdSetPointer);
 fd_set getFdSetAvlbAndMd5Queues(int fdAvailableSlavesQueue,
                                 int fdMd5Queue, int * maxFd);
 fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue);
-
+sem_t *waitSlaveFileQueue(char *slavePidString, int *fd);
+void postSlaveFileQueue(sem_t *slaveFileQueueSem, int fd);
 
 #endif

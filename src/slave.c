@@ -76,15 +76,8 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
 void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem, sem_t *pathsSem) {
     char *filePathToHash;
     while(number) {
-<<<<<<< HEAD
-        // waitForAnswer(fdpaths);//evans
-         if(sem_wait(pathsSem) == ERROR_STATE) {
-                error(SEMAPHORE_POST_ERROR(semaphorePathsName));
-            }
-=======
->>>>>>> e29cee4eae13dc9bd742cee80a43d48a7b3162a0
         filePathToHash = getPath(fdpaths);
-         
+
         printf("slave: path get: %s\n", filePathToHash); //evans
         if(isValidFilePath(filePathToHash)) {
             writeHashOnFd(fdmd5,filePathToHash, md5Sem, pathsSem);
@@ -99,6 +92,9 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem, se
 
 int getNumberOfFilePaths(int fd) {
     char *buffer = getStringFromFd(fd, 0);
+    if(strcmp("", buffer) == EQUALS) {
+        return EOF;
+    }
     return stringToInt(buffer);
 }
 
