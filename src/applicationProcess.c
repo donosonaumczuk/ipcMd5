@@ -369,7 +369,7 @@ fd_set getFdSetAvlbAndMd5Queues(int fdAvailableSlavesQueue,
     FD_SET(fdMd5Queue, &fdSet);
 
     *maxFd = (fdAvailableSlavesQueue > fdMd5Queue)?
-              fdAvailableSlavesQueue : fdMd5Queue;
+              fdAvailableSlavesQueue + 1 : fdMd5Queue + 1;
 
     return fdSet;
 }
