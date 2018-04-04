@@ -39,16 +39,9 @@ int main(int argc, char const *argv[]) {
 
         ShmBuff_t sharedMemory;
         if(viewIsSet) {
-            int shmBuffQty = 1;
             intToString(applicationPid, applicationPidString);
 
-            if(fileQuantity > 4) {
-                shmBuffQty = fileQuantity/4;
-            }
-
-            sharedMemory = shmBuffInit(shmBuffQty * (PATH_MAX +
-                                        MD5_DIGITS + FORMAT_DIGITS),
-                                        applicationPidString);
+            sharedMemory = shmBuffInit(applicationPidString);
 
             if(kill(viewPid, SIGCONT) == ERROR_STATE) {
                 error(KILL_ERROR);
@@ -125,7 +118,7 @@ int main(int argc, char const *argv[]) {
 
                 if(viewIsSet) {
                     if (writeInShmBuff(sharedMemory,
-                                      (signed char *) md5ResultBuffer,
+                                      ( char *) md5ResultBuffer,
                                        strlen(md5ResultBuffer) + 1) !=
                                        OK_STATE) {
                         pendingWrite = TRUE;

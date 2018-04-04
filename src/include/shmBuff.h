@@ -10,10 +10,10 @@
 #define _POSIX_SOURCE
 #endif
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -39,10 +39,10 @@
 
 typedef struct ShmBuff *ShmBuff_t;
 
-ShmBuff_t shmBuffInit(int size, char *shmName);
+ShmBuff_t shmBuffInit(char *shmName);
 ShmBuff_t shmBuffAlreadyInit(char const *shmName);
-int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size);
-void readFromShmBuff(ShmBuff_t shmBuffPointer, signed char *buffer, int size);
+int writeInShmBuff(ShmBuff_t shmBuffPointer,  char *string, int size);
+void readFromShmBuff(ShmBuff_t shmBuffPointer,  char *buffer, int size);
 void freeAndUnmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName);
 void unmapSharedMemory(ShmBuff_t shmBuffPointer, char const *shmName);
 void closeSharedMemory(ShmBuff_t shmBuffPointer, char *shmName);

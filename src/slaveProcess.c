@@ -90,7 +90,7 @@ int main() {
     if(close(fdMd5) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
-
+    
     return 0;
 }
 

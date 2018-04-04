@@ -1,0 +1,7 @@
+./slaveProcess.c: 9f096677170a053e52683ba34c083ee4
+./shmBuff.c: 7500e9d5653c2e9f5cf4a9b1a2a56d5c
+./applicationProcess.c: 74231c2c722801f79309f2254bcfa050
+./errors.c: ed1f4cf2d6080d2c59d3209005201691
+./tools.c: 7cffb1c4bf4f30bc837f6eb354352495
+./viewProcess.c: 5de53e1678b6bcb873c7c3b89e88325c
+./slave.c: e93841f0a07606ff3e8c46f8a28acac2

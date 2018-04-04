@@ -7,7 +7,7 @@ struct ShmBuff {
     int long readerPid;
     sem_t sem;
     int isLastOperationWrite;
-    signed char *buffer;
+     char *buffer;
 };
 
 int initShmBuffSuite() {
@@ -31,11 +31,11 @@ void testWriteInShmBuff() {
 }
 
 ShmBuff_t givenAShmBuff() {
-    return shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
+    return shmBuffInit(SHM_BUFF_NAME);
 }
 
 void whenWriteInShmBuff(ShmBuff_t shmBuffPointer) {
-    writeInShmBuff(shmBuffPointer, (signed char *)STRING_TO_WRITE,
+    writeInShmBuff(shmBuffPointer, ( char *)STRING_TO_WRITE,
                    sizeof(STRING_TO_WRITE));
 }
 
@@ -58,14 +58,14 @@ void testReadFromShmBuff() {
 }
 
 ShmBuff_t givenAShmBuffWithData() {
-    ShmBuff_t shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, SHM_BUFF_NAME);
-    writeInShmBuff(shmBuffPointer, (signed char *)STRING_TO_WRITE,
+    ShmBuff_t shmBuffPointer = shmBuffInit(SHM_BUFF_NAME);
+    writeInShmBuff(shmBuffPointer, ( char *)STRING_TO_WRITE,
                    sizeof(STRING_TO_WRITE));
     return shmBuffPointer;
 }
 
 void whenReadFromShmBuff(ShmBuff_t shmBuffPointer, char *buffer) {
-    readFromShmBuff(shmBuffPointer, (signed char *)buffer,
+    readFromShmBuff(shmBuffPointer, ( char *)buffer,
                     sizeof(STRING_TO_WRITE));
 }
 
@@ -88,7 +88,7 @@ void testWriteInShmBuffAfterRead() {
 ShmBuff_t givenAShmBuffWithDataAfterRead() {
     ShmBuff_t shmBuffPointer = givenAShmBuffWithData();
     char buffer[SIZE_TO_READ];
-    readFromShmBuff(shmBuffPointer, (signed char *)buffer, SIZE_TO_READ);
+    readFromShmBuff(shmBuffPointer, ( char *)buffer, SIZE_TO_READ);
     return shmBuffPointer;
 }
 
@@ -113,7 +113,7 @@ ShmBuff_t givenAShmBuffWithDataAfterReadAndWrite() {
     ShmBuff_t shmBuffPointer = givenAShmBuffWithDataAfterRead();
     char buffer[SIZE_TO_READ];
     whenWriteInShmBuff(shmBuffPointer);
-    readFromShmBuff(shmBuffPointer, (signed char *)buffer, 2);
+    readFromShmBuff(shmBuffPointer, ( char *)buffer, 2);
     return shmBuffPointer;
 }
 
@@ -134,7 +134,7 @@ void testReadAndWriteDifferentProcess() {
 ShmBuff_t givenAShmBuffTwoProces(int pid, char *shmName) {
     ShmBuff_t shmBuffPointer;
     if(pid != 0) {
-        shmBuffPointer = shmBuffInit(SHM_BUFF_SIZE, shmName);
+        shmBuffPointer = shmBuffInit(shmName);
     } else {
         shmBuffPointer = shmBuffAlreadyInit(shmName);
     }
@@ -144,13 +144,13 @@ ShmBuff_t givenAShmBuffTwoProces(int pid, char *shmName) {
 void whenReadAndWriteDifferentProcess(ShmBuff_t shmBuffPointer, int pid,
                                       char *buffer) {
     if(pid != 0) {
-        writeInShmBuff(shmBuffPointer, (signed char *)STRING_TO_WRITE,
+        writeInShmBuff(shmBuffPointer, ( char *)STRING_TO_WRITE,
                        sizeof(STRING_TO_WRITE));
         int status;
         waitpid(pid, &status, WNOHANG);
         exit(0);
     } else {
-        readFromShmBuff(shmBuffPointer, (signed char *)buffer,
+        readFromShmBuff(shmBuffPointer, ( char *)buffer,
                         sizeof(STRING_TO_WRITE));
     }
 }

@@ -7,10 +7,10 @@ struct ShmBuff {
     int long readerPid;
     sem_t sem;
     int isLastOperationWrite;
-    signed char buffer[BUFFER_SIZE];
+     char buffer[BUFFER_SIZE];
 };
 
-ShmBuff_t shmBuffInit(int size, char *shmName) {
+ShmBuff_t shmBuffInit(char *shmName) {
     int fd;
     if((fd = shm_open(shmName, O_CREAT | O_RDWR, 0777)) //evans
        == ERROR_STATE) {
@@ -38,8 +38,8 @@ ShmBuff_t shmBuffInit(int size, char *shmName) {
     shmBuffPointer->readerPid = PID_DEFAULT;
     sem_init(&shmBuffPointer->sem, IS_SHARED, SEM_INIT_VALUE);
     shmBuffPointer->isLastOperationWrite = FALSE;
-    //shmBuffPointer->buffer = (signed char *)(&shmBuffPointer->buffer +
-                             // sizeof(signed char));
+    //shmBuffPointer->buffer = ( char *)(&shmBuffPointer->buffer +
+                             // sizeof( char));
 
     return shmBuffPointer;
 }
@@ -79,9 +79,6 @@ int canWrite(ShmBuff_t shmBuffPointer, int size) {
     }
 
     if (distance + size > shmBuffPointer->size) {
-        printf("el size es %d\n", shmBuffPointer->size);
-        printf("la distancia es %d\n", distance);
-        printf("el length %d\n", size);
         return FALSE;
     }
     return TRUE;
@@ -106,6 +103,7 @@ void sleepReader(ShmBuff_t shmBuffPointer, int size) {
         if(kill(shmBuffPointer->readerPid, SIGSTOP) == ERROR_STATE) {
             error(KILL_ERROR);
         }
+        printf("\ta dormir\n"); //evans
 
         if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
             error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
@@ -120,17 +118,20 @@ void wakeupReader(ShmBuff_t shmBuffPointer) {
         if(kill(shmBuffPointer->readerPid, SIGCONT) == ERROR_STATE) {
             error(KILL_ERROR);
         }
+        printf("kill to wake up reader executed -> readerPid = %ld\n", shmBuffPointer->readerPid); //evans
         shmBuffPointer->readerPid = PID_DEFAULT;
     }
 }
 
-int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
+int writeInShmBuff(ShmBuff_t shmBuffPointer,  char *string, int size) {
     int answer = OK_STATE;
 
     if(sem_trywait(&shmBuffPointer->sem) == ERROR_STATE) {
         if(errno == EAGAIN) {
+            printf("EAGAIN\n"); //evans
             answer = FAIL;
-        } else {
+        }
+        else {
             error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
         }
     }
@@ -144,7 +145,8 @@ int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
             shmBuffPointer->last++;
         }
         shmBuffPointer->isLastOperationWrite = TRUE;
-    } else {
+    }
+    else {
         answer = FAIL;
     }
 
@@ -159,12 +161,13 @@ int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
     return answer;
 }
 
-void readFromShmBuff(ShmBuff_t shmBuffPointer, signed char *buffer, int size) {
+void readFromShmBuff(ShmBuff_t shmBuffPointer,  char *buffer, int size) {
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
     }
 
     sleepReader(shmBuffPointer, size);
+    printf("Continue execution (can be by a wake up)\n"); //evans
 
     for (int i = 0; i < size; i++) {
         if(shmBuffPointer->first == shmBuffPointer->size) {
@@ -182,8 +185,7 @@ void readFromShmBuff(ShmBuff_t shmBuffPointer, signed char *buffer, int size) {
 }
 
 void closeSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
-    signed char eof = EOF;
-    writeInShmBuff(shmBuffPointer, &eof, 1);
+    writeInShmBuff(shmBuffPointer, "", 1);
     freeAndUnmapSharedMemory(shmBuffPointer, shmName);
 }
 
@@ -202,21 +204,23 @@ void unmapSharedMemory(ShmBuff_t shmBuffPointer, char const *shmName) {
 
 char *getStringFromBuffer(ShmBuff_t shmBuffPointer) {
     int i = 0, flag = TRUE, size = 0;
-    signed char current;
+    char current;
     char *buffer = NULL;
 
     do {
         if(i % BLOCK == 0) {
             size += BLOCK;
             buffer = (char *) reAllocateMemory(buffer, size);
+            printf("REALLOC\n"); //evans
         }
-
+        printf("Will read from shmBuff a char\n"); //evans
         readFromShmBuff(shmBuffPointer, &current, ONE_CHAR);
-
+        printf("Read a char from shmBuff\n"); //evans
         if (current == EOF) {
             buffer = (char *) NULL;
             flag = FALSE;
-        } else {
+        }
+        else {
             if(current == 0) {
                 flag = FALSE;
             }
@@ -224,6 +228,8 @@ char *getStringFromBuffer(ShmBuff_t shmBuffPointer) {
         }
 
     } while (flag);
+
+    printf("Exit getStringFromBuffer char by char\n"); //evans
 
     return buffer;
 }
