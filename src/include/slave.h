@@ -23,6 +23,7 @@
 
 char *getPath(int fd);
 void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem, sem_t *pathsSem);
+void writeHashErrorOnFd(int fd, char *filePath, sem_t *md5Sem);
 int givenAFileDescriptorWithSomethingWritten();
 void waitForAnswer(int fd);
 int getNumberOfFilePaths(int fd);

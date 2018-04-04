@@ -60,6 +60,19 @@ static void obtainHash(int fd, char *hash) {
     hash[MD5_DIGITS] = 0;
 }
 
+
+void writeHashErrorOnFd(int fd, char *filePath, sem_t *md5Sem) {
+    char hashError[MD5_DIGITS + 1] = {0};
+    sprintf(hashError, "Invalid File.");
+    if(sem_wait(md5Sem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
+    }
+    writeHashWithExpectedFormat(fd,hashError,filePath);
+    if(sem_post(md5Sem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
+    }
+}
+
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
     if(write(fd, filePath, strlen(filePath)) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
@@ -67,7 +80,7 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
     if(write(fd, ": ", strlen(": ")) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
-    if(write(fd, hash, MD5_DIGITS + 1) == ERROR_STATE) {
+    if(write(fd, hash, strlen(hash) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
@@ -83,7 +96,7 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem, se
             writeHashOnFd(fdmd5,filePathToHash, md5Sem, pathsSem);
         }
         else {
-            errorToStderr("Invalid file.\n");
+            writeHashErrorOnFd(fdmd5, filePathToHash, md5Sem);
         }
         number --;
         free(filePathToHash);
