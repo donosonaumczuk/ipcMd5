@@ -36,7 +36,7 @@ int main(int argc, char const *argv[]) {
         }
 
         FILE *resultFile = fopen(MD5_RESULT_FILE, WRITE_PERMISSION);
-        ///////////////////////////////////////////////VALIDAR
+
         ShmBuff_t sharedMemory;
         if(viewIsSet) {
             intToString(applicationPid, applicationPidString);
@@ -85,19 +85,18 @@ int main(int argc, char const *argv[]) {
 
         while(remainingFiles > 0 || resultsWrited < fileQuantity) {
             fdSet = fdSetBackup;
-            printf("app: in first while\n"); //evans
 
             if(resultsRead < fileQuantity) {
                 printf("app: monitoring...\n"); //evans
-                monitorFds(maxFd + 1, &fdSet);
-                printf("app: left monitoring...\n"); //evans
+                monitorFds(maxFd, &fdSet);
+                printf("app: left monitoring\n"); //evans
             }
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
-                printf("app: availableQueue\n"); //evans
+                printf("app: monitor wake up for -> availableQueue\n"); //evans
                 while(remainingFiles > 0 && (readSlavePidString(fdAvailableSlavesQueue, pidString,
                                          availableSlavesSem) != EMPTY)) {
-                    printf("app: post readSlavePidString\n"); //evans
+                    printf("app: pid read from availableQueue -> %s\n", pidString); //evans
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
@@ -106,32 +105,30 @@ int main(int argc, char const *argv[]) {
                     sendToSlaveFileQueue(pidString, filesToSentQuantityString);
 
                     for(int i = 0; i < filesToSentQuantity; i++) {
-                        printf("app: sending file %s to pid %s\n",argv[nextFileIndex], pidString);
                         sendToSlaveFileQueue(pidString, argv[nextFileIndex++]);
                         remainingFiles--;
                     }
                 }
             }
 
-            //printf("app: Files sent to slave(s)\n"); //evans
-
-
             if(FD_ISSET(fdMd5Queue, &fdSet) || pendingWrite) {
+                printf("app: pendingWrite OR monitor wake up for -> md5Queue\n"); //evans
                 if(!pendingWrite) {
-                    printf("app: not pendingWrite\n"); //evans
+                    printf("app: Not pendingWrite. So, read md5Queue\n"); //evans
                     md5ResultBuffer = getMd5QueueResult(fdMd5Queue,
                                                         md5QueueSem);
                     resultsRead++;
+                    printf("app: md5Buffer contains now -> %s\n", md5ResultBuffer); //evans
                 }
 
-                printf("app: result: %s\n", md5ResultBuffer); //evans
 
                 if(viewIsSet) {
                     if (writeInShmBuff(sharedMemory,
                                       (signed char *) md5ResultBuffer,
                                        strlen(md5ResultBuffer) + 1) !=
                                        OK_STATE) {
-                        printf("app: pendingWrite generated\n"); //evans
+                        printf("app: new pendingWrite generated\n"); //evans
+                        printf("app: pendingWrite for (in md5Buffer) -> %s\n", md5ResultBuffer); //evans
                         pendingWrite = TRUE;
                     }
                     else {
@@ -143,31 +140,33 @@ int main(int argc, char const *argv[]) {
                 }
                 else {
                     fprintf(resultFile, "%s\n", md5ResultBuffer);
+                    printf("app: File writed with -> %s\n", md5ResultBuffer); //evans
                     free(md5ResultBuffer);
                     resultsWrited++;
-                    printf("app: file writed!!\n"); //evans
                 }
             }
         }
 
-        printf("app: exits first while\n"); //evans
+        printf("app: All files distributed - No remainingFiles - First while-loop finished\n"); //evans
 
         maxFd = fdAvailableSlavesQueue;
         fdSetBackup = getFdSetAvlbQueue(fdAvailableSlavesQueue);
 
         int finishRequestedSlaves = 0;
         while(finishRequestedSlaves < slaveQuantity) {
-            printf("app: enter second while\n"); //evans
             fdSet = fdSetBackup;
-            monitorFds(maxFd + 1, &fdSet);
-            printf("app: exit monitor 2nd while\n"); //evans
+            printf("app: monitoring... [2nd while-loop]\n"); //evans
+            monitorFds(maxFd, &fdSet);
+            printf("app: monitor wake up for -> availableQueue [2nd-while-loop]\n"); //evans
             readSlavePidString(fdAvailableSlavesQueue, pidString,
                                availableSlavesSem);
             intToString(0, filesToSentQuantityString);
+            printf("app: pid read from availableQueue -> %s\n", pidString); //evans
             sendToSlaveFileQueue(pidString, filesToSentQuantityString);
             finishRequestedSlaves++;
         }
 
+        printf("app: finish-request for all slaves -> exit 2nd while-loop\n"); //evans
 
         int status;
         int finishedProcesses = 0;
@@ -177,10 +176,12 @@ int main(int argc, char const *argv[]) {
             childrenProcesses++;
         }
 
+        printf("app: Previous line to enter \"waitpid\" while-loop\n"); //evans
         while(finishedProcesses < childrenProcesses) {
             wait(&status);
             finishedProcesses++;
         }
+        printf("app: All children finished -> exit waitpid while-loop\n"); //evans
 
         fclose(resultFile);
 
@@ -195,6 +196,8 @@ int main(int argc, char const *argv[]) {
         if(viewIsSet) {
             closeSharedMemory(sharedMemory, applicationPidString);
         }
+        printf("app: FINISH - SUCCESS\n"); //evans
+
     }
 
     return 0;
@@ -269,34 +272,24 @@ fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue) {
 
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
                        sem_t *availableSlavesSem) {
-    printf("app: ENTER SEM_WAIT readSlavePidString\n"); //evans
     if(sem_wait(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
-    printf("app: EXIT SEM_WAIT readSlavePidString\n"); //evans
 
-    int readRet; //evans
-    if((readRet = read(fdAvailableSlavesQueue, pidString, 1)) == ERROR_STATE) {
-        printf("app: read possible error \n"); //evans
+    if(read(fdAvailableSlavesQueue, pidString, 1) == ERROR_STATE) {
         if(errno == EAGAIN) {
-            printf("app: FALSE ALARM: empty fd\n"); //evans
             return EMPTY;
         }
 
         error(READ_ERROR);
     }
 
-    printf("app: readed qty1: %d \n", readRet); //evans
-
     int index = 0;
     while(pidString[index++] != 0) {
-    
-        if((readRet = read(fdAvailableSlavesQueue, pidString + index, 1)) == ERROR_STATE) {
+        if(read(fdAvailableSlavesQueue, pidString + index, 1) == ERROR_STATE) {
             error(READ_ERROR);
         }
     }
-
-    printf("app: readed qty2: %d \n", readRet); //evans
 
     if(sem_post(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
@@ -306,8 +299,9 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
 }
 
 void sendToSlaveFileQueue(char *pidString, char const *filePath) {
+    printf("app: send path \"%s\" to pid = \"%s\"\n", filePath, pidString);//evans
     int fd;
-    if((fd = open(pidString, O_WRONLY)) == ERROR_STATE) {
+    if((fd = open(pidString, O_NONBLOCK | O_WRONLY)) == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(pidString));
     }
 
@@ -316,22 +310,32 @@ void sendToSlaveFileQueue(char *pidString, char const *filePath) {
     strcat(semName, "/");
     strcat(semName, pidString);
 
+    printf("app: in function \"sendToSlaveFileQueue()\" -> semName = \"%s\"\n", semName);//evans
+
     sem_t *slaveFileQueueSem = sem_open(semName, O_WRONLY);
     if(slaveFileQueueSem == SEM_FAILED) {
         error(SEMAPHORE_OPEN_ERROR(semName));
     }
 
+    printf("app: post open sem, prev wait sem\n");//evans
+
     if(sem_wait(slaveFileQueueSem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(semName));
     }
+
+    printf("app: post wait sem, prev write fileQueue\n");//evans
 
     if(write(fd, filePath, strlen(filePath) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(filePath));
     }
 
+    printf("app: post write fileQueue, prev post sem\n");//evans
+
     if(sem_post(slaveFileQueueSem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(semName));
     }
+
+    printf("app: post open sem, prev close sem\n");//evans
 
     if(sem_close(slaveFileQueueSem) == ERROR_STATE) {
         error(SEMAPHORE_CLOSE_ERROR(semName));
@@ -354,7 +358,7 @@ int getFileLoad(int slaveQuantity, int fileQuantity) {
 
 int monitorFds(int maxFd, fd_set *fdSetPointer) {
     int r;
-    if((r = select(maxFd, fdSetPointer, NULL, NULL, NULL)) == ERROR_STATE) {
+    if((r = select(maxFd + 1, fdSetPointer, NULL, NULL, NULL)) == ERROR_STATE) {
         error(SELECT_ERROR);
     }
 
