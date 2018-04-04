@@ -84,75 +84,30 @@ int canWrite(ShmBuff_t shmBuffPointer, int size) {
     return TRUE;
 }
 
-void sleepReader(ShmBuff_t shmBuffPointer, int size) {
-    int isLastGreaterThanFirst = shmBuffPointer->last >= shmBuffPointer->first;
-    int distance = shmBuffPointer->last - shmBuffPointer->first;
-    distance = (isLastGreaterThanFirst) ? distance :
-                distance + shmBuffPointer->size;
-
-    if(distance == 0 && shmBuffPointer->isLastOperationWrite){
-        distance = shmBuffPointer->size;
-    }
-
-    if(distance < size) {
-        if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
-            error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
-        }
-
-        shmBuffPointer->readerPid = getpid();
-        if(kill(shmBuffPointer->readerPid, SIGSTOP) == ERROR_STATE) {
-            error(KILL_ERROR);
-        }
-
-        if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
-            error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
-        }
-    }
-}
-
-void wakeupReader(ShmBuff_t shmBuffPointer) {
-    int isReaderSleep = shmBuffPointer->readerPid;
-
-    if(isReaderSleep) {
-        if(kill(shmBuffPointer->readerPid, SIGCONT) == ERROR_STATE) {
-            error(KILL_ERROR);
-        }
-        shmBuffPointer->readerPid = PID_DEFAULT;
-    }
-}
-
-int writeInShmBuff(ShmBuff_t shmBuffPointer,  char *string, int size) {
+void writeInShmBuff(ShmBuff_t shmBuffPointer, sem_t *empty, sem_t *full,  char *string, int size) {
     int answer = OK_STATE;
 
-    if(sem_trywait(&shmBuffPointer->sem) == ERROR_STATE) {
-        if(errno == EAGAIN) {
-            answer = FAIL;
-        }
-        else {
-            error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
-        }
+    if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
     }
 
-    if((answer == OK_STATE) && canWrite(shmBuffPointer, size)) {
-        for (int i = 0; i < size; i++) {
-            if(shmBuffPointer->last >= shmBuffPointer->size) {
-                shmBuffPointer->last = START;
-            }
-            shmBuffPointer->buffer[shmBuffPointer->last] = string[i];
-            shmBuffPointer->last++;
+    for (int i = 0; i < size; i++) {
+        if(shmBuffPointer->last >= shmBuffPointer->size) {
+            shmBuffPointer->last = START;
         }
-        shmBuffPointer->isLastOperationWrite = TRUE;
+        shmBuffPointer->buffer[shmBuffPointer->last] = string[i];
+        shmBuffPointer->last++;
+        se
+
     }
+    shmBuffPointer->isLastOperationWrite = TRUE;
+
     else {
         answer = FAIL;
     }
 
     if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
-    }
-
-    if(answer == OK_STATE) {
-        wakeupReader(shmBuffPointer);
     }
 
     return answer;
@@ -162,8 +117,6 @@ void readFromShmBuff(ShmBuff_t shmBuffPointer,  char *buffer, int size) {
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
     }
-
-    sleepReader(shmBuffPointer, size);
 
     for (int i = 0; i < size; i++) {
         if(shmBuffPointer->first == shmBuffPointer->size) {
