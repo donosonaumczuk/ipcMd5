@@ -6,7 +6,7 @@ int main(int argc, char const *argv[]) {
   } else {
       int flag = TRUE;
       char *name;
-      ShmBuff_t sharedMemory = shmBuffAlreadyInit(argv[0]);
+      ShmBuff_t sharedMemory = shmBuffAlreadyInit(argv[1]);
       while(flag) {
           if((name = getStringFromBuffer(sharedMemory)) == NULL) {
               flag = FALSE;

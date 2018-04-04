@@ -25,7 +25,6 @@ char *getPath(int fd);
 void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem);
 int givenAFileDescriptorWithSomethingWritten();
 void waitForAnswer(int fd);
-void readNumber(int fd, char *buffer, int count);
 int getNumberOfFilePaths(int fd);
 void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem);
 

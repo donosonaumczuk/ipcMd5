@@ -37,9 +37,11 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     }
     waitpid(pid, &status, 0);
     obtainHash(fileDescriptors[0],hash);
+    printf("slave: enter sem_wait wirteOnHashFd\n"); //evans
     if(sem_wait(md5Sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
     }
+    printf("slave: exit sem_wait wirteOnHashFd\n"); //evans
     writeHashWithExpectedFormat(fd,hash,filePath);
     if(sem_post(md5Sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
@@ -52,6 +54,7 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
 
 static void obtainHash(int fd, char *hash) {
     if(read(fd, hash, MD5_DIGITS) == ERROR_STATE) {
+        printf("slave: obtaining hash error\n"); //evans
         error(READ_ERROR);
     }
     hash[MD5_DIGITS] = 0;
@@ -74,6 +77,7 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
+        printf("slave: path get: %s\n", filePathToHash); //evans
         if(isValidFilePath(filePathToHash)) {
             writeHashOnFd(fdmd5,filePathToHash, md5Sem);
         }
@@ -83,32 +87,8 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
 }
 
 int getNumberOfFilePaths(int fd) {
-    char quantity[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1];
-    readNumber(fd, quantity, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY);
-    return stringToInt(quantity);
-}
-
-void readNumber(int fd, char *buffer, int count) {
-    int i = 0, readquantity;
-    char aux;
-    do {
-        readquantity = read(fd, &aux, 1);
-        if(readquantity == ERROR_STATE) {
-            error(READ_ERROR);
-        }
-        if(readquantity && isdigit(aux)) {
-            buffer[i] = aux;
-            i++;
-        }
-
-    } while(i < count && isdigit(aux) && readquantity);
-    if(readquantity) {
-        readquantity = read(fd, &aux, 1);
-        if(readquantity == ERROR_STATE) {
-            error(READ_ERROR);
-        }
-    }
-    buffer[i] = 0;
+    char *buffer = getStringFromFd(fd, 0);
+    return stringToInt(buffer);
 }
 
 void waitForAnswer(int fd) {

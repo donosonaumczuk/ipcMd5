@@ -12,8 +12,8 @@ int main() {
     if(pathsSem == SEM_FAILED) {
         error(SEMAPHORE_OPEN_ERROR(semaphorePathsName));
     }
-    sem_t *requestSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_WRONLY);
-    if(requestSem == SEM_FAILED) {
+    sem_t *availableSlavesSem = sem_open(AVAILABLE_SLAVES_SEMAPHORE, O_WRONLY);
+    if(availableSlavesSem == SEM_FAILED) {
         error(SEMAPHORE_OPEN_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
     sem_t *md5Sem = sem_open(MD5_SEMAPHORE, O_WRONLY);
@@ -27,13 +27,13 @@ int main() {
     if(fdRequest == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
-    
+
     fdMd5 = open(MD5_RESULT_QUEUE, O_WRONLY);
     if(fdMd5 == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
-    createFilePathFifo(fifoPaths, fdRequest, requestSem);
+    createFilePathFifo(fifoPaths, fdRequest, availableSlavesSem);
     fdPaths = open(fifoPaths, O_RDONLY);
     if(fdPaths == ERROR_STATE) {
         error(OPEN_FIFO_ERROR(fifoPaths));
@@ -44,27 +44,37 @@ int main() {
     }
 
     do {
+        printf("slave: %d\n", getpid()); //evans
         waitForAnswer(fdPaths);
+        printf("slave: exit waitForAnswer\n"); //evans
         if(sem_wait(pathsSem) == ERROR_STATE) {
             error(SEMAPHORE_WAIT_ERROR(semaphorePathsName));
         }
         number = getNumberOfFilePaths(fdPaths);
+        printf("slave: number readed: %d\n", number);//evans
         if(number) {
             hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem);
+            printf("post hashFilesOfGivenPaths %d\n", number); //evans
             if(sem_post(pathsSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(semaphorePathsName));
             }
-            if(sem_wait(requestSem) == ERROR_STATE) {
+            printf("slave: Number of paths: %d\n", number); //evans
+
+            if(sem_wait(availableSlavesSem) == ERROR_STATE) {
                 error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));
             }
-            if(write(fdRequest, fifoPaths, strlen(fifoPaths)) == ERROR_STATE) {
+            printf("slave: Wtiting pid"); //evans
+            if(write(fdRequest, fifoPaths, strlen(fifoPaths) + 1) == ERROR_STATE) {
                 error(WRITE_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
             }
-            if(sem_post(requestSem) == ERROR_STATE) {
+            if(sem_post(availableSlavesSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(REQUEST_SEMAPHORE));
             }
         }
     } while(number);
+    // if(sem_post(pathsSem) == ERROR_STATE) {
+    //     error(SEMAPHORE_POST_ERROR(semaphorePathsName));
+    // }
     if(sem_close(pathsSem) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
@@ -73,7 +83,7 @@ int main() {
             error(SEMAPHORE_UNLINK_ERROR(semaphorePathsName));
         }
     }
-    if(sem_close(requestSem) == ERROR_STATE) {
+    if(sem_close(availableSlavesSem) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
     if(sem_close(md5Sem) == ERROR_STATE) {
@@ -88,21 +98,22 @@ int main() {
     if(close(fdMd5) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
+    printf("slave: ends\n");
     return 0;
 }
 
-void createFilePathFifo(char *name, int fdRequest, sem_t *requestSem) {
+void createFilePathFifo(char *name, int fdRequest, sem_t *availableSlavesSem) {
     sprintf(name, "%d", getpid());
     if(mkfifo(name, S_IRUSR | S_IWUSR) == ERROR_STATE) {
         error(MKFIFO_ERROR(name));
     }
-    if(sem_wait(requestSem) == ERROR_STATE) {
+    if(sem_wait(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));
     }
     if(write(fdRequest, name, strlen(name) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
     }
-    if(sem_post(requestSem) == ERROR_STATE) {
+    if(sem_post(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(REQUEST_SEMAPHORE));
     }
 }

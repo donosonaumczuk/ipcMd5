@@ -10,6 +10,7 @@ int main(int argc, char const *argv[]) {
         int fileQuantity = argc - 1;
         int nextFileIndex = 1;
         pid_t viewPid;
+        char applicationPidString[MAX_PID_DIGITS];
 
         if(strcmp(argv[1], VIEW_PROC_FLAG) == EQUALS) {
             viewIsSet = TRUE;
@@ -22,9 +23,9 @@ int main(int argc, char const *argv[]) {
                 if(kill(getpid(), SIGSTOP) == ERROR_STATE) {
                     error(KILL_ERROR);
                 }
-                char pidArgument[MAX_PID_DIGITS];
-                intToString(applicationPid, pidArgument);
-                if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, pidArgument,
+
+                intToString(applicationPid, applicationPidString);
+                if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, applicationPidString,
                    NULL) == ERROR_STATE) {
                     error(EXEC_ERROR(VIEW_PROC_BIN_PATH));
                 }
@@ -37,11 +38,11 @@ int main(int argc, char const *argv[]) {
         FILE *resultFile = fopen(MD5_RESULT_FILE, WRITE_PERMISSION);
 
         ShmBuff_t sharedMemory;
-        char shmName[MAX_PID_DIGITS];
         if(viewIsSet) {
-            intToString(applicationPid, shmName);
+            intToString(applicationPid, applicationPidString);
             sharedMemory = shmBuffInit((fileQuantity / 4) * (PATH_MAX +
-                                        MD5_DIGITS + FORMAT_DIGITS), shmName);
+                                        MD5_DIGITS + FORMAT_DIGITS),
+                                        applicationPidString);
             if(kill(viewPid, SIGCONT) == ERROR_STATE) {
                 error(KILL_ERROR);
             }
@@ -69,21 +70,34 @@ int main(int argc, char const *argv[]) {
                                                       fdMd5Queue, &maxFd);
         fd_set fdSet;
 
-        int canReadMd5Queue = TRUE;
+        int pendingWrite = FALSE;
         char *md5ResultBuffer;
 
         int resultsWrited = 0;
+        int resultsRead = 0;
         char pidString[MAX_PID_DIGITS + 1];
         int filesToSentQuantity = fileLoad;
         char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
 
+        printf("app: fileQuantity:%d\n", fileQuantity); //evans
+        printf("app: slaveQuantity:%d\n", slaveQuantity); //evans
+
+
         while(remainingFiles > 0 || resultsWrited < fileQuantity) {
             fdSet = fdSetBackup;
-            monitorFds(maxFd + 1, &fdSet);
+            printf("app: in first while\n"); //evans
+
+            if(resultsRead < fileQuantity) {
+                printf("app: monitoring...\n"); //evans
+                monitorFds(maxFd + 1, &fdSet);
+                printf("app: left monitoring...\n"); //evans
+            }
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
+                printf("app: availableQueue\n"); //evans
                 while(readSlavePidString(fdAvailableSlavesQueue, pidString,
                                          availableSlavesSem) != EMPTY) {
+                    printf("app: post readSlavePidString\n"); //evans
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
@@ -98,21 +112,29 @@ int main(int argc, char const *argv[]) {
                 }
             }
 
-            if(FD_ISSET(fdMd5Queue, &fdSet)) {
-                if(canReadMd5Queue) {
+            printf("app: Files sent to slave(s)\n"); //evans
+
+
+            if(FD_ISSET(fdMd5Queue, &fdSet) || pendingWrite) {
+                if(!pendingWrite) {
+                    printf("app: not pendingWrite\n"); //evans
                     md5ResultBuffer = getMd5QueueResult(fdMd5Queue,
                                                         md5QueueSem);
+                    resultsRead++;
                 }
+
+                printf("app: result: %s\n", md5ResultBuffer); //evans
 
                 if(viewIsSet) {
                     if (writeInShmBuff(sharedMemory,
                                       (signed char *) md5ResultBuffer,
                                        strlen(md5ResultBuffer) + 1) !=
                                        OK_STATE) {
-                        canReadMd5Queue = FALSE;
+                        printf("app: pendingWrite generated\n"); //evans
+                        pendingWrite = TRUE;
                     }
                     else {
-                        canReadMd5Queue = TRUE;
+                        pendingWrite = FALSE;
                         fprintf(resultFile, "%s\n", md5ResultBuffer);
                         free(md5ResultBuffer);
                         resultsWrited++;
@@ -122,18 +144,22 @@ int main(int argc, char const *argv[]) {
                     fprintf(resultFile, "%s\n", md5ResultBuffer);
                     free(md5ResultBuffer);
                     resultsWrited++;
+                    printf("app: file writed!!\n"); //evans
                 }
             }
         }
+
+        printf("app: exits first while\n"); //evans
 
         maxFd = fdAvailableSlavesQueue;
         fdSetBackup = getFdSetAvlbQueue(fdAvailableSlavesQueue);
 
         int finishRequestedSlaves = 0;
         while(finishRequestedSlaves < slaveQuantity) {
+            printf("app: enter second while\n"); //evans
             fdSet = fdSetBackup;
             monitorFds(maxFd + 1, &fdSet);
-
+            printf("app: exit monitor 2nd while\n"); //evans
             readSlavePidString(fdAvailableSlavesQueue, pidString,
                                availableSlavesSem);
             intToString(0, filesToSentQuantityString);
@@ -166,7 +192,7 @@ int main(int argc, char const *argv[]) {
         }
 
         if(viewIsSet) {
-            closeSharedMemory(sharedMemory, shmName);
+            closeSharedMemory(sharedMemory, applicationPidString);
         }
     }
 
@@ -242,24 +268,34 @@ fd_set getFdSetAvlbQueue(int fdAvailableSlavesQueue) {
 
 int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
                        sem_t *availableSlavesSem) {
+    printf("app: ENTER SEM_WAIT readSlavePidString\n"); //evans
     if(sem_wait(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
     }
+    printf("app: EXIT SEM_WAIT readSlavePidString\n"); //evans
 
-    if(read(fdAvailableSlavesQueue, pidString, 1) == ERROR_STATE) {
+    int readRet; //evans
+    if((readRet = read(fdAvailableSlavesQueue, pidString, 1)) == ERROR_STATE) {
+        printf("app: read possible error \n"); //evans
         if(errno == EAGAIN) {
+            printf("app: FALSE ALARM: empty fd\n"); //evans
             return EMPTY;
         }
 
         error(READ_ERROR);
     }
 
+    printf("app: readed qty1: %d \n", readRet); //evans
+
     int index = 0;
     while(pidString[index++] != 0) {
-        if(read(fdAvailableSlavesQueue, pidString + index, 1) == ERROR_STATE) {
+        printf("app: While post wait\n");
+        if((readRet = read(fdAvailableSlavesQueue, pidString + index, 1)) == ERROR_STATE) {
             error(READ_ERROR);
         }
     }
+
+    printf("app: readed qty2: %d \n", readRet); //evans
 
     if(sem_post(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
