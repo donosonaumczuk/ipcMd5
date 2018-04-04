@@ -36,7 +36,7 @@ int main(int argc, char const *argv[]) {
         }
 
         FILE *resultFile = fopen(MD5_RESULT_FILE, WRITE_PERMISSION);
-
+        ///////////////////////////////////////////////VALIDAR
         ShmBuff_t sharedMemory;
         if(viewIsSet) {
             intToString(applicationPid, applicationPidString);
@@ -106,13 +106,14 @@ int main(int argc, char const *argv[]) {
                     sendToSlaveFileQueue(pidString, filesToSentQuantityString);
 
                     for(int i = 0; i < filesToSentQuantity; i++) {
+                        printf("app: sending file %s to pid %s\n",argv[nextFileIndex], pidString);
                         sendToSlaveFileQueue(pidString, argv[nextFileIndex++]);
                         remainingFiles--;
                     }
                 }
             }
 
-            printf("app: Files sent to slave(s)\n"); //evans
+            //printf("app: Files sent to slave(s)\n"); //evans
 
 
             if(FD_ISSET(fdMd5Queue, &fdSet) || pendingWrite) {
@@ -289,7 +290,6 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
 
     int index = 0;
     while(pidString[index++] != 0) {
-        printf("app: While post wait\n");
         if((readRet = read(fdAvailableSlavesQueue, pidString + index, 1)) == ERROR_STATE) {
             error(READ_ERROR);
         }
@@ -353,7 +353,7 @@ int getFileLoad(int slaveQuantity, int fileQuantity) {
 
 int monitorFds(int maxFd, fd_set *fdSetPointer) {
     int r;
-    if((r = select(maxFd + 1, fdSetPointer, NULL, NULL, NULL)) == ERROR_STATE) {
+    if((r = select(maxFd, fdSetPointer, NULL, NULL, NULL)) == ERROR_STATE) {
         error(SELECT_ERROR);
     }
 
@@ -369,7 +369,7 @@ fd_set getFdSetAvlbAndMd5Queues(int fdAvailableSlavesQueue,
     FD_SET(fdMd5Queue, &fdSet);
 
     *maxFd = (fdAvailableSlavesQueue > fdMd5Queue)?
-              fdAvailableSlavesQueue + 1 : fdMd5Queue + 1;
+              fdAvailableSlavesQueue : fdMd5Queue;
 
     return fdSet;
 }

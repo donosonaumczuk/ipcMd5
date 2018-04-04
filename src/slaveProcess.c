@@ -33,18 +33,10 @@ int main() {
         error(OPEN_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
-    createFilePathFifo(fifoPaths, fdRequest, availableSlavesSem);
-    fdPaths = open(fifoPaths, O_RDONLY);
-    if(fdPaths == ERROR_STATE) {
-        error(OPEN_FIFO_ERROR(fifoPaths));
-    }
-
-    if(fcntl(fdPaths, F_SETPIPE_SZ, GREATEST_FILE_LOAD * (PATH_MAX + 1)) < 0) {
-        error(CHANGE_PIPE_SIZE_ERROR);
-    }
-
+    fdPaths = createFilePathFifo(fifoPaths, fdRequest, availableSlavesSem);
+    printf("slave: %d\n", getpid()); //evans
+        
     do {
-        printf("slave: %d\n", getpid()); //evans
         waitForAnswer(fdPaths);
         printf("slave: exit waitForAnswer\n"); //evans
         if(sem_wait(pathsSem) == ERROR_STATE) {
@@ -58,12 +50,11 @@ int main() {
             if(sem_post(pathsSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(semaphorePathsName));
             }
-            printf("slave: Number of paths: %d\n", number); //evans
-
+            printf("before entering availableSlavesSem wait.\n");
             if(sem_wait(availableSlavesSem) == ERROR_STATE) {
                 error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));
             }
-            printf("slave: Wtiting pid"); //evans
+            printf("slave: Writting pid"); //evans
             if(write(fdRequest, fifoPaths, strlen(fifoPaths) + 1) == ERROR_STATE) {
                 error(WRITE_FIFO_ERROR(AVAILABLE_SLAVES_QUEUE));
             }
@@ -102,10 +93,17 @@ int main() {
     return 0;
 }
 
-void createFilePathFifo(char *name, int fdRequest, sem_t *availableSlavesSem) {
+int createFilePathFifo(char *name, int fdRequest, sem_t *availableSlavesSem) {
+    int fd;
     sprintf(name, "%d", getpid());
     if(mkfifo(name, S_IRUSR | S_IWUSR) == ERROR_STATE) {
         error(MKFIFO_ERROR(name));
+    }
+    if((fd = open(name, O_NONBLOCK | O_RDONLY)) == ERROR_STATE) {
+        error(OPEN_FIFO_ERROR(name));
+    }
+    if(fcntl(fd, F_SETPIPE_SZ, GREATEST_FILE_LOAD * (PATH_MAX + 1)) < 0) {
+        error(CHANGE_PIPE_SIZE_ERROR);
     }
     if(sem_wait(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(REQUEST_SEMAPHORE));
@@ -116,4 +114,5 @@ void createFilePathFifo(char *name, int fdRequest, sem_t *availableSlavesSem) {
     if(sem_post(availableSlavesSem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(REQUEST_SEMAPHORE));
     }
+    return fd;
 }

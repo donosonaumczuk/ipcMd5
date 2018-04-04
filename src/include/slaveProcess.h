@@ -8,6 +8,6 @@
 #include <ipcMd5.h>
 #include <applicationProcess.h>
 
-void createFilePathFifo(char *name, int fdrequest, sem_t *availableSlavesSem);
+int createFilePathFifo(char *name, int fdrequest, sem_t *availableSlavesSem);
 
 #endif
