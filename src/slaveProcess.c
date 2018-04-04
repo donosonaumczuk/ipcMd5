@@ -44,12 +44,13 @@ int main() {
             error(SEMAPHORE_WAIT_ERROR(semaphorePathsName));
         }
         number = getNumberOfFilePaths(fdPaths);
-         if(sem_post(pathsSem) == ERROR_STATE) {
-                error(SEMAPHORE_POST_ERROR(semaphorePathsName));
-            }
+         
         printf("slave: number readed: %d\n", number);//evans
         if(number) {
             hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem, pathsSem);
+            if(sem_post(pathsSem) == ERROR_STATE) {
+                error(SEMAPHORE_POST_ERROR(semaphorePathsName));
+            }
             printf("slave: post hashFilesOfGivenPaths %d\n", number); //evans
             printf("before entering availableSlavesSem wait.\n");
             if(sem_wait(availableSlavesSem) == ERROR_STATE) {
