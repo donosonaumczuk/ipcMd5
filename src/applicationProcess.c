@@ -95,8 +95,8 @@ int main(int argc, char const *argv[]) {
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
                 printf("app: availableQueue\n"); //evans
-                while(readSlavePidString(fdAvailableSlavesQueue, pidString,
-                                         availableSlavesSem) != EMPTY) {
+                while(remainingFiles > 0 && (readSlavePidString(fdAvailableSlavesQueue, pidString,
+                                         availableSlavesSem) != EMPTY)) {
                     printf("app: post readSlavePidString\n"); //evans
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
