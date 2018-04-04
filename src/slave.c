@@ -37,15 +37,15 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     }
     waitpid(pid, &status, 0);
     obtainHash(fileDescriptors[0],hash);
-    printf("slave: enter sem_wait wirteOnHashFd\n"); //evans
     if(sem_wait(md5Sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
     }
-    printf("slave: exit sem_wait wirteOnHashFd\n"); //evans
+
     writeHashWithExpectedFormat(fd,hash,filePath);
     if(sem_post(md5Sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
     }
+
     if(close(fileDescriptors[0]) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
@@ -54,7 +54,6 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
 
 static void obtainHash(int fd, char *hash) {
     if(read(fd, hash, MD5_DIGITS) == ERROR_STATE) {
-        printf("slave: obtaining hash error\n"); //evans
         error(READ_ERROR);
     }
     hash[MD5_DIGITS] = 0;
@@ -91,7 +90,6 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
     while(number) {
         filePathToHash = getPath(fdpaths);
 
-        printf("slave: path get: %s\n", filePathToHash); //evans
         if(isValidFilePath(filePathToHash)) {
             writeHashOnFd(fdmd5,filePathToHash, md5Sem);
         }

@@ -3,8 +3,6 @@
 int stringToInt(char *string) {
     int ret = 0, i;
 
-    printf("stringToInt -> string: \"%s\"\n", string); //evans
-
     for(i = 0; string[i] && isdigit(string[i]); i++) {
         ret = ret * 10 + (string[i] - '0');
     }

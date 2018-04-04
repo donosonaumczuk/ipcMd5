@@ -34,11 +34,10 @@ int main() {
     }
 
     fdPaths = createFilePathFifo(fifoPaths, fdRequest, availableSlavesSem);
-    printf("slave: %d\n", getpid()); //evans
 
     do {
         waitForAnswer(fdPaths);
-        
+
         if(sem_wait(pathsSem) == ERROR_STATE) {
             error(SEMAPHORE_WAIT_ERROR(semaphorePathsName));
         }
@@ -91,7 +90,7 @@ int main() {
     if(close(fdMd5) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
-    printf("slave: %d ends\n", getpid());
+
     return 0;
 }
 

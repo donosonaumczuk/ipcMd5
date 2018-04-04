@@ -49,7 +49,7 @@ int main(int argc, char const *argv[]) {
             sharedMemory = shmBuffInit(shmBuffQty * (PATH_MAX +
                                         MD5_DIGITS + FORMAT_DIGITS),
                                         applicationPidString);
-                                        
+
             if(kill(viewPid, SIGCONT) == ERROR_STATE) {
                 error(KILL_ERROR);
             }
@@ -87,10 +87,6 @@ int main(int argc, char const *argv[]) {
         int filesToSentQuantity = fileLoad;
         char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
 
-        printf("app: fileQuantity:%d\n", fileQuantity); //evans
-        printf("app: slaveQuantity:%d\n", slaveQuantity); //evans
-
-
         while(remainingFiles > 0 || resultsWrited < fileQuantity) {
             fdSet = fdSetBackup;
 
@@ -101,7 +97,6 @@ int main(int argc, char const *argv[]) {
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
                 while(remainingFiles > 0 && (readSlavePidString(fdAvailableSlavesQueue, pidString,
                                          availableSlavesSem) != EMPTY)) {
-                    printf("app: pid read from availableQueue -> %s\n", pidString); //evans
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
@@ -123,13 +118,10 @@ int main(int argc, char const *argv[]) {
 
             if(FD_ISSET(fdMd5Queue, &fdSet) || pendingWrite) {
                 if(!pendingWrite) {
-                    printf("app: Not pendingWrite. So, read md5Queue\n"); //evans
                     md5ResultBuffer = getMd5QueueResult(fdMd5Queue,
                                                         md5QueueSem);
                     resultsRead++;
-                    printf("app: md5Buffer contains now -> %s\n", md5ResultBuffer); //evans
                 }
-
 
                 if(viewIsSet) {
                     if (writeInShmBuff(sharedMemory,
@@ -147,7 +139,6 @@ int main(int argc, char const *argv[]) {
                 }
                 else {
                     fprintf(resultFile, "%s\n", md5ResultBuffer);
-                    printf("app: File writed with -> %s\n", md5ResultBuffer); //evans
                     free(md5ResultBuffer);
                     resultsWrited++;
                 }
@@ -164,16 +155,11 @@ int main(int argc, char const *argv[]) {
             readSlavePidString(fdAvailableSlavesQueue, pidString,
                                availableSlavesSem);
             intToString(0, filesToSentQuantityString);
-            printf("app: pid read from availableQueue -> %s\n", pidString); //evans
 
             int fd;
             sem_t *fileQueueSem = waitSlaveFileQueue(pidString, &fd);
 
-            printf("app: will send finish request to %s slave\n", pidString);//evans
-
             writeToFd(filesToSentQuantityString, fd);
-
-            printf("app: sent -> finish request to %s slave\n", pidString);//evans
 
             postSlaveFileQueue(fileQueueSem, fd);
 
@@ -186,6 +172,7 @@ int main(int argc, char const *argv[]) {
 
         if(viewIsSet) {
             childrenProcesses++;
+            closeSharedMemory(sharedMemory, applicationPidString);
         }
 
         while(finishedProcesses < childrenProcesses) {
@@ -202,12 +189,6 @@ int main(int argc, char const *argv[]) {
         if(close(fdAvailableSlavesQueue) == ERROR_STATE) {
             error(CLOSE_ERROR);
         }
-
-        if(viewIsSet) {
-            closeSharedMemory(sharedMemory, applicationPidString);
-        }
-        printf("app: FINISH - SUCCESS\n"); //evans
-
     }
 
     return 0;

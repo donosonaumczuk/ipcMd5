@@ -7,12 +7,11 @@ int main(int argc, char const *argv[]) {
       int flag = TRUE;
       char *name;
       ShmBuff_t sharedMemory = shmBuffAlreadyInit(argv[1]);
-      printf("llego a la vista\n");
       while(flag) {
           if((name = getStringFromBuffer(sharedMemory)) == NULL) {
-              printf("xd: %s\n", name);
               flag = FALSE;
-          } else {
+          }
+          else {
               printf("%s\n", name);
               free(name);
           }

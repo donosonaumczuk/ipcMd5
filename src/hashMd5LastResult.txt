@@ -1,1 +1,7 @@
-./Makefile: 23198f6c63bc3ddb0d5b4face86c8f84
+./applicationProcess.c: 843889824fb2344df1fcb97d7a17547a
+./shmBuff.c: ebe7b9bfb5091d05a224c42cb755b8f3
+./slaveProcess.c: 5dbde81a1c2aac6007ec8b25c5a51062
+./slave.c: e93841f0a07606ff3e8c46f8a28acac2
+./tools.c: 7cffb1c4bf4f30bc837f6eb354352495
+./viewProcess.c: 39c969acdb5caf12ec4789a1788b1fda
+./errors.c: ed1f4cf2d6080d2c59d3209005201691

@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <errors.h>
 #include <tools.h>
+#include <ipcMd5.h> //evans
 
 #define PID_DEFAULT 0
 #define START 0
@@ -34,6 +35,7 @@
 #define ONE_CHAR 1
 #define BLOCK 10
 #define SHM_SEMAPHORE "SharedMemoery Semaphore"
+#define BUFFER_SIZE (PATH_MAX + FORMAT_DIGITS)
 
 typedef struct ShmBuff *ShmBuff_t;
 

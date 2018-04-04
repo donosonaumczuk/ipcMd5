@@ -7,23 +7,22 @@ struct ShmBuff {
     int long readerPid;
     sem_t sem;
     int isLastOperationWrite;
-    signed char *buffer;
+    signed char buffer[BUFFER_SIZE];
 };
 
 ShmBuff_t shmBuffInit(int size, char *shmName) {
     int fd;
-    if((fd = shm_open(shmName, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR))
+    if((fd = shm_open(shmName, O_CREAT | O_RDWR, 0777)) //evans
        == ERROR_STATE) {
         error(OPEN_SHARED_MEMORY_ERROR);
     }
 
-    if(ftruncate(fd, sizeof(size * sizeof(signed char) +
-       sizeof(struct ShmBuff))) == ERROR_STATE) {
+    if(ftruncate(fd, sizeof(struct ShmBuff)) == ERROR_STATE) {
         error(TRUNCATE_ERROR);
     }
 
     ShmBuff_t shmBuffPointer;
-    if((shmBuffPointer = mmap(NULL, size * sizeof(signed char) +
+    if((shmBuffPointer = mmap(NULL,
        sizeof(struct ShmBuff), PROT_READ | PROT_WRITE, MAP_SHARED, fd, OFF_SET))
        == (void *)ERROR_STATE) {
            error(MAP_ERROR);
@@ -35,12 +34,12 @@ ShmBuff_t shmBuffInit(int size, char *shmName) {
 
     shmBuffPointer->first = START;
     shmBuffPointer->last = START;
-    shmBuffPointer->size = size;
+    shmBuffPointer->size = BUFFER_SIZE;
     shmBuffPointer->readerPid = PID_DEFAULT;
     sem_init(&shmBuffPointer->sem, IS_SHARED, SEM_INIT_VALUE);
     shmBuffPointer->isLastOperationWrite = FALSE;
-    shmBuffPointer->buffer = (signed char *)(&shmBuffPointer->buffer +
-                              sizeof(signed char));
+    //shmBuffPointer->buffer = (signed char *)(&shmBuffPointer->buffer +
+                             // sizeof(signed char));
 
     return shmBuffPointer;
 }
@@ -48,7 +47,7 @@ ShmBuff_t shmBuffInit(int size, char *shmName) {
 ShmBuff_t shmBuffAlreadyInit(char const *shmName) {
     struct stat stat;
     int fd;
-    if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
+    if((fd = shm_open(shmName,  O_RDWR, 0777)) == ERROR_STATE) {
         error(OPEN_SHARED_MEMORY_ERROR);
     }
 
@@ -130,7 +129,6 @@ int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
 
     if(sem_trywait(&shmBuffPointer->sem) == ERROR_STATE) {
         if(errno == EAGAIN) {
-            printf("fallo por semaforo\n"); //evans
             answer = FAIL;
         } else {
             error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
@@ -147,18 +145,14 @@ int writeInShmBuff(ShmBuff_t shmBuffPointer, signed char *string, int size) {
         }
         shmBuffPointer->isLastOperationWrite = TRUE;
     } else {
-        printf("no fallo por semaforo\n"); //evans
         answer = FAIL;
     }
-
-    printf("lo que esta en el buffer%s\n", shmBuffPointer->buffer);
 
     if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
     }
 
     if(answer == OK_STATE) {
-        printf("funco\n");
         wakeupReader(shmBuffPointer);
     }
 
@@ -176,6 +170,7 @@ void readFromShmBuff(ShmBuff_t shmBuffPointer, signed char *buffer, int size) {
         if(shmBuffPointer->first == shmBuffPointer->size) {
             shmBuffPointer->first = START;
         }
+
         buffer[i] = shmBuffPointer->buffer[shmBuffPointer->first];
         shmBuffPointer->first++;
     }
@@ -200,21 +195,8 @@ void freeAndUnmapSharedMemory(ShmBuff_t shmBuffPointer, char *shmName) {
 }
 
 void unmapSharedMemory(ShmBuff_t shmBuffPointer, char const *shmName) {
-    struct stat stat;
-    int fd;
-    if((fd = shm_open(shmName,  O_RDWR, S_IRUSR | S_IWUSR)) == ERROR_STATE) {
-        error(OPEN_SHARED_MEMORY_ERROR);
-    }
-
-    if(fstat(fd, &stat) == ERROR_STATE) {
-        error(STAT_ERROR);
-    }
-
-    if(munmap(shmBuffPointer, stat.st_size) == ERROR_STATE) {
+    if(munmap(shmBuffPointer, sizeof(struct ShmBuff)) == ERROR_STATE) {
         error(UNMAP_ERROR);
-    }
-    if(close(fd) == ERROR_STATE) {
-        error(CLOSE_ERROR);
     }
 }
 
@@ -225,7 +207,7 @@ char *getStringFromBuffer(ShmBuff_t shmBuffPointer) {
 
     do {
         if(i % BLOCK == 0) {
-            size =+ BLOCK;
+            size += BLOCK;
             buffer = (char *) reAllocateMemory(buffer, size);
         }
 
