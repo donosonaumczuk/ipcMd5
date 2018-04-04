@@ -2,7 +2,7 @@
 
 #define SHMBUFFTEST_H
 
-#include "../../src/include/shmBuff.h"
+#include <shmBuff.c>
 #include <CUnit/Basic.h>
 #include <sys/wait.h>
 
