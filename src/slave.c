@@ -76,6 +76,7 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
 void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem, sem_t *pathsSem) {
     char *filePathToHash;
     while(number) {
+        // waitForAnswer(fdpaths);//evans
          if(sem_wait(pathsSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(semaphorePathsName));
             }

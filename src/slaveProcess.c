@@ -35,9 +35,9 @@ int main() {
 
     fdPaths = createFilePathFifo(fifoPaths, fdRequest, availableSlavesSem);
     printf("slave: %d\n", getpid()); //evans
-        
+
     do {
-        printf("slave: entering waitForAnswer");
+        printf("slave: entering waitForAnswer");//evans
         waitForAnswer(fdPaths);
         printf("slave: exit waitForAnswer\n"); //evans
         if(sem_wait(pathsSem) == ERROR_STATE) {
