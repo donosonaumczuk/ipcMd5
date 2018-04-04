@@ -45,7 +45,7 @@ int main() {
         number = getNumberOfFilePaths(fdPaths);
 
         if(number > 0) {
-            hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem, pathsSem);
+            hashFilesOfGivenPaths(number, fdPaths, fdMd5, md5Sem);
             if(sem_post(pathsSem) == ERROR_STATE) {
                 error(SEMAPHORE_POST_ERROR(semaphorePathsName));
             }

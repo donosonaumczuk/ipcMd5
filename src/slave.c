@@ -7,7 +7,7 @@ char *getPath(int fd) {
     return getStringFromFd(fd, 0);
 }
 
-void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem, sem_t *pathsSem) {
+void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     int status, fileDescriptors[2];
     pid_t pid;
     char hash[MD5_DIGITS + 1];
@@ -86,14 +86,14 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
 
 }
 
-void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem, sem_t *pathsSem) {
+void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
 
         printf("slave: path get: %s\n", filePathToHash); //evans
         if(isValidFilePath(filePathToHash)) {
-            writeHashOnFd(fdmd5,filePathToHash, md5Sem, pathsSem);
+            writeHashOnFd(fdmd5,filePathToHash, md5Sem);
         }
         else {
             writeHashErrorOnFd(fdmd5, filePathToHash, md5Sem);
