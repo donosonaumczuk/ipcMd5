@@ -11,24 +11,28 @@ int main(int argc, char const *argv[]) {
         int nextFileIndex = 1;
         pid_t viewPid;
         char applicationPidString[MAX_PID_DIGITS];
+        ShmBuff_t sharedMemory;
+        sem_t *emptySem;
+        sem_t *fullSem;
 
         if(strcmp(argv[1], VIEW_PROC_FLAG) == EQUALS) {
             viewIsSet = TRUE;
+            openEmptyFullSemaphores(&emptySem, &fullSem);
 
             if((viewPid = fork()) == ERROR_STATE) {
                 error(FORK_ERROR);
             }
 
+            intToString(applicationPid, applicationPidString);
             if(viewPid == 0) {
-                if(kill(getpid(), SIGSTOP) == ERROR_STATE) {
-                    error(KILL_ERROR);
-                }
-
-                intToString(applicationPid, applicationPidString);
+                closeEmptyFullSemaphores(emptySem, fullSem);
                 if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, applicationPidString,
                    NULL) == ERROR_STATE) {
                     error(EXEC_ERROR(VIEW_PROC_BIN_PATH));
                 }
+            }
+            else {
+                sharedMemory = shmBuffInit(applicationPidString);
             }
 
             nextFileIndex = 2;
@@ -36,18 +40,6 @@ int main(int argc, char const *argv[]) {
         }
 
         FILE *resultFile = fopen(MD5_RESULT_FILE, WRITE_PERMISSION);
-
-        ShmBuff_t sharedMemory;
-        if(viewIsSet) {
-            intToString(applicationPid, applicationPidString);
-
-            sharedMemory = shmBuffInit(applicationPidString);
-
-            if(kill(viewPid, SIGCONT) == ERROR_STATE) {
-                error(KILL_ERROR);
-            }
-
-        }
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
@@ -71,25 +63,22 @@ int main(int argc, char const *argv[]) {
                                                       fdMd5Queue, &maxFd);
         fd_set fdSet;
 
-        int pendingWrite = FALSE;
         char *md5ResultBuffer;
 
-        int resultsWrited = 0;
         int resultsRead = 0;
         char pidString[MAX_PID_DIGITS + 1];
         int filesToSentQuantity = fileLoad;
         char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
 
-        while(remainingFiles > 0 || resultsWrited < fileQuantity) {
+        while(remainingFiles > 0 || resultsRead < fileQuantity) {
             fdSet = fdSetBackup;
 
-            if(resultsRead < fileQuantity) {
-                monitorFds(maxFd, &fdSet);
-            }
+            monitorFds(maxFd, &fdSet);
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
-                while(remainingFiles > 0 && (readSlavePidString(fdAvailableSlavesQueue, pidString,
-                                         availableSlavesSem) != EMPTY)) {
+                while(remainingFiles > 0 &&
+                     (readSlavePidString(fdAvailableSlavesQueue, pidString,
+                      availableSlavesSem) != EMPTY)) {
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
@@ -109,32 +98,17 @@ int main(int argc, char const *argv[]) {
                 }
             }
 
-            if(FD_ISSET(fdMd5Queue, &fdSet) || pendingWrite) {
-                if(!pendingWrite) {
-                    md5ResultBuffer = getMd5QueueResult(fdMd5Queue,
-                                                        md5QueueSem);
-                    resultsRead++;
-                }
+            if(FD_ISSET(fdMd5Queue, &fdSet)) {
+                md5ResultBuffer = getMd5QueueResult(fdMd5Queue, md5QueueSem);
+                resultsRead++;
 
                 if(viewIsSet) {
-                    if (writeInShmBuff(sharedMemory,
-                                      ( char *) md5ResultBuffer,
-                                       strlen(md5ResultBuffer) + 1) !=
-                                       OK_STATE) {
-                        pendingWrite = TRUE;
-                    }
-                    else {
-                        pendingWrite = FALSE;
-                        fprintf(resultFile, "%s\n", md5ResultBuffer);
-                        free(md5ResultBuffer);
-                        resultsWrited++;
-                    }
+                    writeStringToShmBuff(sharedMemory, emptySem, fullSem,
+                                         md5ResultBuffer);
                 }
-                else {
-                    fprintf(resultFile, "%s\n", md5ResultBuffer);
-                    free(md5ResultBuffer);
-                    resultsWrited++;
-                }
+                printf("\tresults remaining %d\n", fileQuantity - resultsRead);
+                fprintf(resultFile, "%s\n", md5ResultBuffer);
+                free(md5ResultBuffer);
             }
         }
 
@@ -165,7 +139,7 @@ int main(int argc, char const *argv[]) {
 
         if(viewIsSet) {
             childrenProcesses++;
-            closeSharedMemory(sharedMemory, applicationPidString);
+            closeSharedMemory(sharedMemory, emptySem, fullSem, applicationPidString);
         }
 
         while(finishedProcesses < childrenProcesses) {
@@ -186,6 +160,30 @@ int main(int argc, char const *argv[]) {
 
     return 0;
 }
+
+void openEmptyFullSemaphores(sem_t **emptySem, sem_t **fullSem) {
+    if((*emptySem = sem_open(EMPTY_SEMAPHORE, O_CREAT | O_RDWR,
+                             S_IRUSR | S_IWUSR, 0)) == SEM_FAILED) {
+        error(SEMAPHORE_OPEN_ERROR(EMPTY_SEMAPHORE));
+    }
+
+    if((*fullSem = sem_open(FULL_SEMAPHORE, O_CREAT | O_RDWR,
+                            S_IRUSR | S_IWUSR, BUFFER_SIZE)) == SEM_FAILED) {
+        error(SEMAPHORE_OPEN_ERROR(FULL_SEMAPHORE));
+    }
+}
+
+void closeEmptyFullSemaphores(sem_t *emptySem, sem_t *fullSem) {
+    if(sem_close(emptySem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(EMPTY_SEMAPHORE));
+    }
+
+    if(sem_close(fullSem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(FULL_SEMAPHORE));
+    }
+}
+
+
 
 sem_t *waitSlaveFileQueue(char *slavePidString, int *fd) {
     if((*fd = open(slavePidString, O_NONBLOCK | O_WRONLY)) == ERROR_STATE) {
