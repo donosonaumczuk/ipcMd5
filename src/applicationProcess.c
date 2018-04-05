@@ -106,6 +106,8 @@ int main(int argc, char const *argv[]) {
                     writeStringToShmBuff(sharedMemory, emptySem, fullSem,
                                          md5ResultBuffer);
                 }
+
+                fprintf(resultFile, "%s\n", md5ResultBuffer);
                 free(md5ResultBuffer);
             }
         }
