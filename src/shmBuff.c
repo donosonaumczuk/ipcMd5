@@ -63,12 +63,9 @@ ShmBuff_t shmBuffAlreadyInit(char const *shmName) {
 
 void writeInShmBuff(ShmBuff_t shmBuffPointer, sem_t *empty, sem_t *full,
                     char buffer) {
-    printf("full wait writeInShmBuff\n"); //evans
-
     if(sem_wait(full) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
     }
-    printf("sem wait writeInShmBuff\n"); //evans
 
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
@@ -83,22 +80,18 @@ void writeInShmBuff(ShmBuff_t shmBuffPointer, sem_t *empty, sem_t *full,
     if(sem_post(empty) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
     }
-    printf("empty post writeInShmBuff\n"); //evans
 
     if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
     }
-    printf("sem post writeInShmBuff\n"); //evans
-
 }
 
 void readFromShmBuff(ShmBuff_t shmBuffPointer, sem_t *empty, sem_t *full,
                      char *buffer) {
-     printf("empty wait readFromShmBuff\n"); //evans
      if(sem_wait(empty) == ERROR_STATE) {
          error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
      }
-    printf("sem wait readFromShmBuff\n"); //evans
+
     if(sem_wait(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(SHM_SEMAPHORES));
     }
@@ -113,13 +106,10 @@ void readFromShmBuff(ShmBuff_t shmBuffPointer, sem_t *empty, sem_t *full,
     if(sem_post(full) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
     }
-    printf("full post readFromShmBuff\n"); //evans
 
     if(sem_post(&shmBuffPointer->sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(SHM_SEMAPHORES));
     }
-    printf("sem post readFromShmBuff\n"); //evans
-
 }
 
 void closeSharedMemory(ShmBuff_t shmBuffPointer, sem_t *emptySem,
@@ -158,7 +148,7 @@ char *getStringFromBuffer(ShmBuff_t shmBuffPointer, sem_t *empty,
         if(current == 0) {
             flag = FALSE;
         }
-        
+
         buffer[i++] = current;
 
     } while (flag);
