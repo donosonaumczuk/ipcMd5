@@ -162,6 +162,18 @@ int main(int argc, char const *argv[]) {
 }
 
 void openEmptyFullSemaphores(sem_t **emptySem, sem_t **fullSem) {
+    if(sem_unlink(EMPTY_SEMAPHORE) == ERROR_STATE) {
+        if(errno != ENOENT) {
+            error(SEMAPHORE_UNLINK_ERROR(EMPTY_SEMAPHORE));
+        }
+    }
+
+    if(sem_unlink(FULL_SEMAPHORE) == ERROR_STATE) {
+        if(errno != ENOENT) {
+            error(SEMAPHORE_UNLINK_ERROR(FULL_SEMAPHORE));
+        }
+    }
+
     if((*emptySem = sem_open(EMPTY_SEMAPHORE, O_CREAT | O_RDWR,
                              S_IRUSR | S_IWUSR, 0)) == SEM_FAILED) {
         error(SEMAPHORE_OPEN_ERROR(EMPTY_SEMAPHORE));
