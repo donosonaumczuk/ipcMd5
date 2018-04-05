@@ -1,7 +1,8 @@
 #include <tools.h>
 
 int stringToInt(char *string) {
-    int ret = 0,i;
+    int ret = 0, i;
+
     for(i = 0; string[i] && isdigit(string[i]); i++) {
         ret = ret * 10 + (string[i] - '0');
     }
@@ -55,12 +56,14 @@ char *getStringFromFd(int fd, char separator) {
             stringToReturn = (char *) reAllocateMemory(stringToReturn, (index + BLOCK) * sizeof(char));
         }
         readReturn = read(fd, (void *) (stringToReturn + (index * sizeof(char))), 1);
+        // printf("getStringFromFd readReturn: %d\n", readReturn);
+        // printf("getStringFromFd -> char read = \"%c\"\n", stringToReturn[index]);
         if((readReturn <= 0) || (stringToReturn[index] == EOF) || (stringToReturn[index] == separator)) {
             stringToReturn[index] = 0;
             finished = TRUE;
         }
         index++;
     } while(!finished);
-    
+
     return stringToReturn;
 }

@@ -10,24 +10,29 @@ int main(int argc, char const *argv[]) {
         int fileQuantity = argc - 1;
         int nextFileIndex = 1;
         pid_t viewPid;
+        char applicationPidString[MAX_PID_DIGITS];
+        ShmBuff_t sharedMemory;
+        sem_t *emptySem;
+        sem_t *fullSem;
 
         if(strcmp(argv[1], VIEW_PROC_FLAG) == EQUALS) {
             viewIsSet = TRUE;
+            openEmptyFullSemaphores(&emptySem, &fullSem);
 
             if((viewPid = fork()) == ERROR_STATE) {
                 error(FORK_ERROR);
             }
 
+            intToString(applicationPid, applicationPidString);
             if(viewPid == 0) {
-                if(kill(getpid(), SIGSTOP) == ERROR_STATE) {
-                    error(KILL_ERROR);
-                }
-                char pidArgument[MAX_PID_DIGITS];
-                intToString(applicationPid, pidArgument);
-                if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, pidArgument,
+                closeEmptyFullSemaphores(emptySem, fullSem);
+                if(execl(VIEW_PROC_BIN_PATH, VIEW_PROC_BIN_NAME, applicationPidString,
                    NULL) == ERROR_STATE) {
                     error(EXEC_ERROR(VIEW_PROC_BIN_PATH));
                 }
+            }
+            else {
+                sharedMemory = shmBuffInit(applicationPidString);
             }
 
             nextFileIndex = 2;
@@ -35,17 +40,6 @@ int main(int argc, char const *argv[]) {
         }
 
         FILE *resultFile = fopen(MD5_RESULT_FILE, WRITE_PERMISSION);
-
-        ShmBuff_t sharedMemory;
-        char shmName[MAX_PID_DIGITS];
-        if(viewIsSet) {
-            intToString(applicationPid, shmName);
-            sharedMemory = shmBuffInit((fileQuantity / 4) * (PATH_MAX +
-                                        MD5_DIGITS + FORMAT_DIGITS), shmName);
-            if(kill(viewPid, SIGCONT) == ERROR_STATE) {
-                error(KILL_ERROR);
-            }
-        }
 
         int slaveQuantity = getSlaveQuantity(fileQuantity);
 
@@ -69,60 +63,50 @@ int main(int argc, char const *argv[]) {
                                                       fdMd5Queue, &maxFd);
         fd_set fdSet;
 
-        int canReadMd5Queue = TRUE;
         char *md5ResultBuffer;
 
-        int resultsWrited = 0;
+        int resultsRead = 0;
         char pidString[MAX_PID_DIGITS + 1];
         int filesToSentQuantity = fileLoad;
         char filesToSentQuantityString[GREATEST_LOAD_DIGITS + 1];
 
-        while(remainingFiles > 0 || resultsWrited < fileQuantity) {
+        while(remainingFiles > 0 || resultsRead < fileQuantity) {
             fdSet = fdSetBackup;
-            monitorFds(maxFd + 1, &fdSet);
+
+            monitorFds(maxFd, &fdSet);
 
             if(FD_ISSET(fdAvailableSlavesQueue, &fdSet) && remainingFiles > 0) {
-                while(readSlavePidString(fdAvailableSlavesQueue, pidString,
-                                         availableSlavesSem) != EMPTY) {
+                while(remainingFiles > 0 &&
+                     (readSlavePidString(fdAvailableSlavesQueue, pidString,
+                      availableSlavesSem) != EMPTY)) {
                     if(fileLoad > remainingFiles) {
                         filesToSentQuantity = remainingFiles;
                     }
 
+                    int fd;
+                    sem_t *fileQueueSem = waitSlaveFileQueue(pidString, &fd);
+
                     intToString(filesToSentQuantity, filesToSentQuantityString);
-                    sendToSlaveFileQueue(pidString, filesToSentQuantityString);
+                    writeToFd(filesToSentQuantityString, fd);
 
                     for(int i = 0; i < filesToSentQuantity; i++) {
-                        sendToSlaveFileQueue(pidString, argv[nextFileIndex++]);
+                        writeToFd(argv[nextFileIndex++], fd);
                         remainingFiles--;
                     }
+
+                    postSlaveFileQueue(fileQueueSem, fd);
                 }
             }
 
             if(FD_ISSET(fdMd5Queue, &fdSet)) {
-                if(canReadMd5Queue) {
-                    md5ResultBuffer = getMd5QueueResult(fdMd5Queue,
-                                                        md5QueueSem);
-                }
+                md5ResultBuffer = getMd5QueueResult(fdMd5Queue, md5QueueSem);
+                resultsRead++;
 
                 if(viewIsSet) {
-                    if (writeInShmBuff(sharedMemory,
-                                      (signed char *) md5ResultBuffer,
-                                       strlen(md5ResultBuffer) + 1) !=
-                                       OK_STATE) {
-                        canReadMd5Queue = FALSE;
-                    }
-                    else {
-                        canReadMd5Queue = TRUE;
-                        fprintf(resultFile, "%s\n", md5ResultBuffer);
-                        free(md5ResultBuffer);
-                        resultsWrited++;
-                    }
+                    writeStringToShmBuff(sharedMemory, emptySem, fullSem,
+                                         md5ResultBuffer);
                 }
-                else {
-                    fprintf(resultFile, "%s\n", md5ResultBuffer);
-                    free(md5ResultBuffer);
-                    resultsWrited++;
-                }
+                free(md5ResultBuffer);
             }
         }
 
@@ -132,15 +116,20 @@ int main(int argc, char const *argv[]) {
         int finishRequestedSlaves = 0;
         while(finishRequestedSlaves < slaveQuantity) {
             fdSet = fdSetBackup;
-            monitorFds(maxFd + 1, &fdSet);
-
+            monitorFds(maxFd, &fdSet);
             readSlavePidString(fdAvailableSlavesQueue, pidString,
                                availableSlavesSem);
             intToString(0, filesToSentQuantityString);
-            sendToSlaveFileQueue(pidString, filesToSentQuantityString);
+
+            int fd;
+            sem_t *fileQueueSem = waitSlaveFileQueue(pidString, &fd);
+
+            writeToFd(filesToSentQuantityString, fd);
+
+            postSlaveFileQueue(fileQueueSem, fd);
+
             finishRequestedSlaves++;
         }
-
 
         int status;
         int finishedProcesses = 0;
@@ -148,6 +137,7 @@ int main(int argc, char const *argv[]) {
 
         if(viewIsSet) {
             childrenProcesses++;
+            closeSharedMemory(sharedMemory, emptySem, fullSem, applicationPidString);
         }
 
         while(finishedProcesses < childrenProcesses) {
@@ -164,13 +154,69 @@ int main(int argc, char const *argv[]) {
         if(close(fdAvailableSlavesQueue) == ERROR_STATE) {
             error(CLOSE_ERROR);
         }
-
-        if(viewIsSet) {
-            closeSharedMemory(sharedMemory, shmName);
-        }
     }
 
     return 0;
+}
+
+void openEmptyFullSemaphores(sem_t **emptySem, sem_t **fullSem) {
+    if((*emptySem = sem_open(EMPTY_SEMAPHORE, O_CREAT | O_RDWR,
+                             S_IRUSR | S_IWUSR, 0)) == SEM_FAILED) {
+        error(SEMAPHORE_OPEN_ERROR(EMPTY_SEMAPHORE));
+    }
+
+    if((*fullSem = sem_open(FULL_SEMAPHORE, O_CREAT | O_RDWR,
+                            S_IRUSR | S_IWUSR, BUFFER_SIZE)) == SEM_FAILED) {
+        error(SEMAPHORE_OPEN_ERROR(FULL_SEMAPHORE));
+    }
+}
+
+void closeEmptyFullSemaphores(sem_t *emptySem, sem_t *fullSem) {
+    if(sem_close(emptySem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(EMPTY_SEMAPHORE));
+    }
+
+    if(sem_close(fullSem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(FULL_SEMAPHORE));
+    }
+}
+
+
+
+sem_t *waitSlaveFileQueue(char *slavePidString, int *fd) {
+    if((*fd = open(slavePidString, O_NONBLOCK | O_WRONLY)) == ERROR_STATE) {
+        error(OPEN_FIFO_ERROR(slavePidString));
+    }
+
+    char semName[MAX_PID_DIGITS + 2] = {0};
+
+    strcat(semName, "/");
+    strcat(semName, slavePidString);
+
+    sem_t *slaveFileQueueSem = sem_open(semName, O_WRONLY);
+    if(slaveFileQueueSem == SEM_FAILED) {
+        error(SEMAPHORE_OPEN_ERROR(semName));
+    }
+
+    if(sem_wait(slaveFileQueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(semName));
+    }
+
+    return slaveFileQueueSem;
+}
+
+void postSlaveFileQueue(sem_t *slaveFileQueueSem, int fd) {
+    if(sem_post(slaveFileQueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(semName));
+    }
+
+    if(sem_close(slaveFileQueueSem) == ERROR_STATE) {
+        error(SEMAPHORE_CLOSE_ERROR(semName));
+    }
+
+    if(close(fd) == ERROR_STATE) {
+        error(CLOSE_ERROR);
+    }
 }
 
 void finishSemaphores(sem_t *availableSlavesSem, sem_t *md5QueueSem) {
@@ -248,6 +294,9 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
 
     if(read(fdAvailableSlavesQueue, pidString, 1) == ERROR_STATE) {
         if(errno == EAGAIN) {
+            if(sem_post(availableSlavesSem) == ERROR_STATE) {
+                error(SEMAPHORE_POST_ERROR(AVAILABLE_SLAVES_SEMAPHORE));
+            }
             return EMPTY;
         }
 
@@ -268,40 +317,9 @@ int readSlavePidString(int fdAvailableSlavesQueue, char *pidString,
     return OK_STATE;
 }
 
-void sendToSlaveFileQueue(char *pidString, char const *filePath) {
-    int fd;
-    if((fd = open(pidString, O_WRONLY)) == ERROR_STATE) {
-        error(OPEN_FIFO_ERROR(pidString));
-    }
-
-    char semName[MAX_PID_DIGITS + 2] = {0};
-
-    strcat(semName, "/");
-    strcat(semName, pidString);
-
-    sem_t *slaveFileQueueSem = sem_open(semName, O_WRONLY);
-    if(slaveFileQueueSem == SEM_FAILED) {
-        error(SEMAPHORE_OPEN_ERROR(semName));
-    }
-
-    if(sem_wait(slaveFileQueueSem) == ERROR_STATE) {
-        error(SEMAPHORE_WAIT_ERROR(semName));
-    }
-
-    if(write(fd, filePath, strlen(filePath) + 1) == ERROR_STATE) {
-        error(WRITE_FIFO_ERROR(filePath));
-    }
-
-    if(sem_post(slaveFileQueueSem) == ERROR_STATE) {
-        error(SEMAPHORE_POST_ERROR(semName));
-    }
-
-    if(sem_close(slaveFileQueueSem) == ERROR_STATE) {
-        error(SEMAPHORE_CLOSE_ERROR(semName));
-    }
-
-    if(close(fd) == ERROR_STATE) {
-        error(CLOSE_ERROR);
+void writeToFd(char const *string, int fd) {
+    if(write(fd, string, strlen(string) + 1) == ERROR_STATE) {
+        error(WRITE_FILE_ERROR("")); //check later
     }
 }
 

@@ -40,10 +40,12 @@ void writeHashOnFd(int fd, char *filePath, sem_t *md5Sem) {
     if(sem_wait(md5Sem) == ERROR_STATE) {
         error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
     }
+
     writeHashWithExpectedFormat(fd,hash,filePath);
     if(sem_post(md5Sem) == ERROR_STATE) {
         error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
     }
+
     if(close(fileDescriptors[0]) == ERROR_STATE) {
         error(CLOSE_ERROR);
     }
@@ -57,6 +59,19 @@ static void obtainHash(int fd, char *hash) {
     hash[MD5_DIGITS] = 0;
 }
 
+
+void writeHashErrorOnFd(int fd, char *filePath, sem_t *md5Sem) {
+    char hashError[MD5_DIGITS + 1] = {0};
+    sprintf(hashError, "Invalid File.");
+    if(sem_wait(md5Sem) == ERROR_STATE) {
+        error(SEMAPHORE_WAIT_ERROR(MD5_SEMAPHORE));
+    }
+    writeHashWithExpectedFormat(fd,hashError,filePath);
+    if(sem_post(md5Sem) == ERROR_STATE) {
+        error(SEMAPHORE_POST_ERROR(MD5_SEMAPHORE));
+    }
+}
+
 static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
     if(write(fd, filePath, strlen(filePath)) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
@@ -64,7 +79,7 @@ static void writeHashWithExpectedFormat(int fd, char *hash, char *filePath) {
     if(write(fd, ": ", strlen(": ")) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
-    if(write(fd, hash, MD5_DIGITS + 1) == ERROR_STATE) {
+    if(write(fd, hash, strlen(hash) + 1) == ERROR_STATE) {
         error(WRITE_FIFO_ERROR(MD5_RESULT_QUEUE));
     }
 
@@ -74,8 +89,12 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
     char *filePathToHash;
     while(number) {
         filePathToHash = getPath(fdpaths);
+
         if(isValidFilePath(filePathToHash)) {
             writeHashOnFd(fdmd5,filePathToHash, md5Sem);
+        }
+        else {
+            writeHashErrorOnFd(fdmd5, filePathToHash, md5Sem);
         }
         number --;
         free(filePathToHash);
@@ -83,32 +102,11 @@ void hashFilesOfGivenPaths(int number, int fdpaths, int fdmd5, sem_t *md5Sem) {
 }
 
 int getNumberOfFilePaths(int fd) {
-    char quantity[MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY + 1];
-    readNumber(fd, quantity, MAX_QUANTITY_OF_DIGITS_OF_FILE_PATHS_QUANTITY);
-    return stringToInt(quantity);
-}
-
-void readNumber(int fd, char *buffer, int count) {
-    int i = 0, readquantity;
-    char aux;
-    do {
-        readquantity = read(fd, &aux, 1);
-        if(readquantity == ERROR_STATE) {
-            error(READ_ERROR);
-        }
-        if(readquantity && isdigit(aux)) {
-            buffer[i] = aux;
-            i++;
-        }
-
-    } while(i < count && isdigit(aux) && readquantity);
-    if(readquantity) {
-        readquantity = read(fd, &aux, 1);
-        if(readquantity == ERROR_STATE) {
-            error(READ_ERROR);
-        }
+    char *buffer = getStringFromFd(fd, 0);
+    if(strcmp("", buffer) == EQUALS) {
+        return EOF;
     }
-    buffer[i] = 0;
+    return stringToInt(buffer);
 }
 
 void waitForAnswer(int fd) {

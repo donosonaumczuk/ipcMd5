@@ -1,4 +1,4 @@
-#include "./include/mainTest.h"
+#include <mainTest.h>
 
 int main()
 {

@@ -11,6 +11,7 @@
 #define BLOCK	10
 #define TRUE	 1
 #define FALSE	 0
+#define EQUALS 0
 
 int stringToInt(char *string);
 void * allocateMemory(size_t bytes);
